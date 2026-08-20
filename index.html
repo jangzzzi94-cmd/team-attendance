@@ -703,9 +703,7 @@ const Auth = {
       const u = data.user;
       Auth.user = { uid: u.id, email: u.email };
       await DB.set("users", u.id, {
-        uid: u.id, email: u.email, name, birth,
-        role: "member", approved: false, gaejik: 0,
-        joinedAt: Date.now(), bdayYear: 0
+        uid: u.id, email: u.email, name, birth, joinedAt: Date.now()
       });
       await DB.loadAll();
       pendingProfile = null;
@@ -945,9 +943,18 @@ function pendingScreen() {
     '<div class="card"><div class="row" style="padding:0 0 12px"><div class="avatar">' + esc(initial(Auth.profile.name)) + "</div>" +
     '<div class="sp"><div class="nm">' + esc(Auth.profile.name) + '</div><div class="ds">' + esc(Auth.profile.email) + "</div></div></div>" +
     '<div class="banner i">가입 신청이 접수되었습니다. 관리자에게 승인을 요청해주세요.</div>' +
+    '<button class="btn pri full" id="pRef" style="margin-bottom:9px">새로고침</button>' +
     '<button class="btn full" id="pOut">로그아웃</button></div></div></div>';
 }
-function bindPending() { $("#pOut").onclick = () => Auth.logout(); }
+function bindPending() {
+  $("#pOut").onclick = () => Auth.logout();
+  const r = $("#pRef");
+  if (r) r.onclick = async () => {
+    if (DB.mode === "sb") { try { await DB.loadAll(); } catch (e) { } }
+    syncProfile(); render();
+    if (Auth.profile && !Auth.profile.approved) toast("아직 승인 전입니다", "err");
+  };
+}
 
 /* ============================ 로그인 / 회원가입 ============================ */
 let authTab = "login";
@@ -2481,8 +2488,7 @@ function bindCompleteProfile() {
     if (!n || !b) return toast("모두 입력해주세요", "err");
     try {
       await DB.set("users", Auth.user.uid, {
-        uid: Auth.user.uid, email: Auth.user.email, name: n, birth: b,
-        role: "member", approved: false, gaejik: 0, joinedAt: Date.now(), bdayYear: 0
+        uid: Auth.user.uid, email: Auth.user.email, name: n, birth: b, joinedAt: Date.now()
       });
       pendingProfile = null;
       if (DB.mode === "sb") await DB.loadAll();
@@ -2633,10 +2639,18 @@ async function afterSignedIn() {
 const _render = render;
 render = function () {
   if (!App.booting && Auth.user && DB.ready && !DB.get("users", Auth.user.uid)) {
+    const now = Date.now();
+    if (!window._missSince) window._missSince = now;
+    if (now - window._missSince < 4000) {
+      $("#root").innerHTML = bootScreen();
+      setTimeout(() => { if (DB.mode === "sb") DB.loadAll().catch(() => render()); else render(); }, 1300);
+      return;
+    }
     $("#root").innerHTML = completeProfileScreen();
     bindCompleteProfile();
     return;
   }
+  window._missSince = 0;
   _render();
 };
 </script>
