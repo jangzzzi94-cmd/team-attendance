@@ -564,6 +564,14 @@ function photoOkCount(d, date, S) {
   return photoList(d).filter(x => x.at == null || (x.at >= from && x.at <= to)).length;
 }
 
+/** 이 사람의 벌금 집계 시작일 — 가입 시점 이후부터만 */
+function joinStart(u, S) {
+  if (!u || !u.joinedAt) return "";
+  const jd = dstr(new Date(u.joinedAt));
+  // 그날 출근 등록창(기본 05:00)이 열리기 전에 가입했다면 당일부터, 아니면 다음날부터
+  return u.joinedAt <= atTime(jd, (S && S.checkinOpen) || "05:00") ? jd : addDays(jd, 1);
+}
+
 function fineId(uid, date, kind) { return uid + "__" + date + "__" + kind; }
 function dayId(uid, date) { return uid + "__" + date; }
 
@@ -826,8 +834,11 @@ function collectFines(opt) {
   const list = [];
 
   users.forEach(u => {
-    const start = from || (u.joinedAt ? dstr(new Date(u.joinedAt)) : addDays(tdy, -60));
-    let d = start > to ? to : start;
+    let start = from || addDays(tdy, -60);
+    const js = joinStart(u, S);
+    if (js && js > start) start = js;        // 가입 이전 기간은 절대 집계하지 않음
+    if (start > to) { return; }              // 가입 전 구간만 요청된 경우 → 벌금 없음
+    let d = start;
     let guard = 0;
     while (d <= to && guard++ < 800) {
       const daily = DB.get("daily", dayId(u.uid, d));
@@ -2091,6 +2102,18 @@ function viewCal() {
   const byDate = {};
   fines.forEach(f => { (byDate[f.date] = byDate[f.date] || []).push(f); });
 
+  /* 개직 사용 내역 */
+  const calUsers = calUser !== "all" ? USERS().filter(u => u.uid === calUser) : ACTIVE_USERS();
+  const gjBy = {};
+  calUsers.forEach(u => {
+    for (let dd = 1; dd <= last.getDate(); dd++) {
+      const ds2 = App.month + "-" + pad(dd);
+      const rec = DB.get("daily", dayId(u.uid, ds2));
+      if (rec && rec.type === "개직") (gjBy[ds2] = gjBy[ds2] || []).push(u.name);
+    }
+  });
+  const gjTotal = Object.values(gjBy).reduce((a, b) => a + b.length, 0);
+
   let h = '<div class="card"><div class="btn-row" style="align-items:center">' +
     '<button class="btn sm" id="mPrev">‹</button>' +
     '<div style="flex:1;text-align:center;font-size:17px;font-weight:800;letter-spacing:-.5px">' + Y + "년 " + M + "월</div>" +
@@ -2104,7 +2127,7 @@ function viewCal() {
   h += '<div class="grid g3" style="margin-bottom:12px">' +
     '<div class="stat acc-r"><div class="lb">' + M + '월 벌금</div><div class="vl" style="font-size:18px">' + won(sumFines(fines)) + "</div></div>" +
     '<div class="stat"><div class="lb">건수</div><div class="vl" style="font-size:18px">' + fines.filter(f => !f.waived).length + "</div></div>" +
-    '<div class="stat acc-g"><div class="lb">납부완료</div><div class="vl" style="font-size:18px">' + won(sumFines(fines, f => f.status === "paid")) + "</div></div></div>";
+    '<div class="stat acc-p"><div class="lb">개직 사용</div><div class="vl" style="font-size:18px">' + gjTotal + "건</div></div></div>";
 
   h += '<div class="card"><div class="cal">' +
     DOWK.map((d, i) => '<div class="dw ' + (i === 0 ? "s" : i === 6 ? "u" : "") + '">' + d + "</div>").join("");
@@ -2115,6 +2138,7 @@ function viewCal() {
     const fs = (byDate[ds] || []).slice().sort((a, b) => a.name.localeCompare(b.name, "ko"));
     h += '<div class="cel' + (wd ? "" : " off") + (ds === tdy ? " tod" : "") + (hn ? " hol" : "") + '" data-cal="' + ds + '">' +
       '<div class="dn ' + (w === 0 ? "s" : w === 6 ? "u" : "") + '">' + day + "</div>" +
+      (gjBy[ds] || []).map(n => '<div class="ev g">' + esc(n) + "<br>🌴 개직</div>").join("") +
       fs.map(f => '<div class="ev ' + (f.waived ? "c" : f.status === "paid" ? "g" : (KINDS[f.kind] || KINDS.etc).color) + '" style="position:relative;padding-right:16px">' +
         esc(f.name) + "<br>" + (KINDS[f.kind] || KINDS.etc).label + "<br>" + (f.amount || 0).toLocaleString("ko-KR") +
         (Auth.isAdmin() ? '<button data-calx="' + f.id + '" title="삭제" style="position:absolute;top:2px;right:2px;width:14px;height:14px;border-radius:4px;background:rgba(0,0,0,.2);color:#fff;font-size:9px;line-height:1;display:flex;align-items:center;justify-content:center">✕</button>' : "") +
@@ -2331,6 +2355,7 @@ function viewAdmin() {
 }
 
 function adminMembers() {
+  const S = SET();
   const pend = USERS().filter(u => !u.approved && !u.disabled);
   const act = ACTIVE_USERS();
   const off = USERS().filter(u => u.disabled);
@@ -2347,12 +2372,13 @@ function adminMembers() {
     '<div class="banner i" style="font-size:12px">등급 · ' +
     GRADE_ORDER.map(g => "<b>" + g + "</b> " + GRADES[g].desc).join(" / ") + "</div>" +
     "<div class='card pad0'><div class='tw'><table style='min-width:620px'>" +
-    "<thead><tr><th>이름</th><th>등급</th><th class='num'>개직</th><th class='num'>이번달 벌금</th><th></th></tr></thead><tbody>" +
+    "<thead><tr><th>이름</th><th>집계시작</th><th>등급</th><th class='num'>개직</th><th class='num'>이번달 벌금</th><th></th></tr></thead><tbody>" +
     act.map(u => {
       const fs = collectFines({ uid: u.uid }).filter(f => f.date.startsWith(monthOf(today())) && !f.pending);
       const bm = u.birth ? Number(u.birth.split("-")[1]) : 0;
       return "<tr><td><b>" + esc(u.name) + "</b>" + (bm === new Date().getMonth() + 1 ? " 🎂" : "") +
         "<div style='font-size:11px;color:var(--tx3)'>" + esc(u.email) + "</div></td>" +
+        "<td class='mono' style='font-size:11.5px;color:var(--tx3)'>" + (joinStart(u, S) ? fmtD(joinStart(u, S)) + " 부터" : "-") + "</td>" +
         "<td><span class='bdg " + gradeInfo(u).color + "'>" + esc(gradeOf(u)) + "</span>" +
         (gradeInfo(u).tl && (u.tlMembers || []).length ? "<div style='font-size:10.5px;color:var(--tx3);margin-top:3px'>담당 " + u.tlMembers.length + "명</div>" : "") + "</td>" +
         "<td class='num'><b style='color:var(--pur)'>" + Number(u.gaejik || 0) + "</b></td>" +
@@ -2433,7 +2459,8 @@ function adminSettings() {
 
   return '<div class="card"><div class="card-h"><h3>💳 계좌 · 기간</h3></div>' +
     '<div class="fld"><label>벌금 입금 계좌</label><input class="inp" id="stAcct" value="' + esc(S.account) + '"></div>' +
-    '<div class="fld"><label>벌금 집계 시작일</label><input class="inp" type="date" id="stStart" value="' + esc(S.startDate || "") + '">' +
+    '<div class="fld"><label>벌금 집계 시작일 (팀 전체)</label><input class="inp" type="date" id="stStart" value="' + esc(S.startDate || "") + '">' +
+    '<div class="hint">신규 가입자는 이 날짜와 무관하게 <b>본인 가입일 이후부터만</b> 집계됩니다.</div>' +
     '<div class="hint">비워두면 각자 가입일부터 집계합니다. 도입일 지정을 권장합니다.</div></div></div>' +
 
     '<div class="card"><div class="card-h"><h3>📸 출근 · 지각</h3></div>' +
@@ -2489,7 +2516,7 @@ function adminSettings() {
 function bindAdmin() {
   $$("[data-atab]").forEach(b => b.onclick = () => { App.adminTab = b.dataset.atab; render(); });
   $$("[data-appr]").forEach(b => b.onclick = async () => {
-    try { await DB.set("users", b.dataset.appr, { approved: true, grade: "AP" }); toast("승인 완료 · AP 등급으로 지정됨", "ok"); }
+    try { await DB.set("users", b.dataset.appr, { approved: true }); toast("승인 완료 · 등급은 후보자입니다 (팀원 → 관리에서 변경)", "ok"); }
     catch (e) { toast(cleanErr(e), "err"); }
   });
   $$("[data-rej]").forEach(b => b.onclick = () => confirmM("가입을 거절하시겠습니까?", async () => {
