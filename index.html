@@ -286,7 +286,6 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 </head>
 <body>
 <div id="root"></div>
-<!-- Supabase JS v2 (번들 내장 · 외부 CDN 불필요) -->
 <script>
 var supabaseLib=(()=>{var $t=Object.defineProperty;var Fs=Object.getOwnPropertyDescriptor;var Ms=Object.getOwnPropertyNames;var qs=Object.prototype.hasOwnProperty;var Hs=(t,e)=>{for(var r in e)$t(t,r,{get:e[r],enumerable:!0})},Ks=(t,e,r,s)=>{if(e&&typeof e=="object"||typeof e=="function")for(let n of Ms(e))!qs.call(t,n)&&n!==r&&$t(t,n,{get:()=>e[n],enumerable:!(s=Fs(e,n))||s.enumerable});return t};var Ws=t=>Ks($t({},"__esModule",{value:!0}),t);var Qi={};Hs(Qi,{createClient:()=>Bs});var Vs=Symbol.for("@supabase/supabase-js.traceContextExtractor");function pr(){return globalThis[Vs]}function ie(t,e){var r={};for(var s in t)Object.prototype.hasOwnProperty.call(t,s)&&e.indexOf(s)<0&&(r[s]=t[s]);if(t!=null&&typeof Object.getOwnPropertySymbols=="function")for(var n=0,s=Object.getOwnPropertySymbols(t);n<s.length;n++)e.indexOf(s[n])<0&&Object.prototype.propertyIsEnumerable.call(t,s[n])&&(r[s[n]]=t[s[n]]);return r}function gr(t,e,r,s){function n(i){return i instanceof r?i:new r(function(o){o(i)})}return new(r||(r=Promise))(function(i,o){function a(u){try{c(s.next(u))}catch(h){o(h)}}function l(u){try{c(s.throw(u))}catch(h){o(h)}}function c(u){u.done?i(u.value):n(u.value).then(a,l)}c((s=s.apply(t,e||[])).next())})}var yr=t=>t?(...e)=>t(...e):(...e)=>fetch(...e);var pe=class extends Error{constructor(e,r="FunctionsError",s){super(e),this.name=r,this.context=s}toJSON(){return{name:this.name,message:this.message,context:this.context}}},Pe=class extends pe{constructor(e){super("Failed to send a request to the Edge Function","FunctionsFetchError",e)}},ge=class extends pe{constructor(e){super("Relay Error invoking the Edge Function","FunctionsRelayError",e)}},ye=class extends pe{constructor(e){super("Edge Function returned a non-2xx status code","FunctionsHttpError",e)}},Ie;(function(t){t.Any="any",t.ApNortheast1="ap-northeast-1",t.ApNortheast2="ap-northeast-2",t.ApSouth1="ap-south-1",t.ApSoutheast1="ap-southeast-1",t.ApSoutheast2="ap-southeast-2",t.CaCentral1="ca-central-1",t.EuCentral1="eu-central-1",t.EuWest1="eu-west-1",t.EuWest2="eu-west-2",t.EuWest3="eu-west-3",t.SaEast1="sa-east-1",t.UsEast1="us-east-1",t.UsWest1="us-west-1",t.UsWest2="us-west-2"})(Ie||(Ie={}));var je=class{constructor(e,{headers:r={},customFetch:s,region:n=Ie.Any}={}){this.url=e,this.headers=r,this.region=n,this.fetch=yr(s)}setAuth(e){this.headers.Authorization=`Bearer ${e}`}invoke(e){return gr(this,arguments,void 0,function*(r,s={}){var n,i;let o,a,l;try{let{headers:c,method:u,body:h,signal:f,timeout:d}=s,p={},{region:g}=s;g||(g=this.region);let y=new URL(`${this.url}/${r}`);g&&g!=="any"&&(p["x-region"]=g,y.searchParams.set("forceFunctionRegion",g));let w,b=!!c&&Object.keys(c).some(Ce=>Ce.toLowerCase()==="content-type");h&&!b?typeof Blob!="undefined"&&h instanceof Blob||h instanceof ArrayBuffer?(p["Content-Type"]="application/octet-stream",w=h):typeof h=="string"?(p["Content-Type"]="text/plain",w=h):typeof FormData!="undefined"&&h instanceof FormData?w=h:(p["Content-Type"]="application/json",w=JSON.stringify(h)):h&&typeof h!="string"&&!(typeof Blob!="undefined"&&h instanceof Blob)&&!(h instanceof ArrayBuffer)&&!(typeof FormData!="undefined"&&h instanceof FormData)?w=JSON.stringify(h):w=h;let _=f;d&&(a=new AbortController,o=setTimeout(()=>a.abort(),d),f?(_=a.signal,l=()=>a.abort(),f.addEventListener("abort",l)):_=a.signal);let E=yield this.fetch(y.toString(),{method:u||"POST",headers:Object.assign(Object.assign(Object.assign({},p),this.headers),c),body:w,signal:_}).catch(Ce=>{throw new Pe(Ce)}),j=E.headers.get("x-relay-error");if(j&&j==="true")throw new ge(E);if(!E.ok)throw new ye(E);let k=((n=E.headers.get("Content-Type"))!==null&&n!==void 0?n:"text/plain").split(";")[0].trim().toLowerCase(),A;return k==="application/json"?A=yield E.json():k==="application/octet-stream"||k==="application/pdf"?A=yield E.blob():k==="text/event-stream"?A=E:k==="multipart/form-data"?A=yield E.formData():A=yield E.text(),{data:A,error:null,response:E}}catch(c){return{data:null,error:c,response:c instanceof ye||c instanceof ge?c.context:void 0}}finally{o&&clearTimeout(o),l&&((i=s.signal)===null||i===void 0||i.removeEventListener("abort",l))}})}};var mr=t=>Math.min(1e3*2**t,3e4),Gs=[520,503],br=["GET","HEAD","OPTIONS"],ot=class extends Error{constructor(t){super(t.message),this.name="PostgrestError",this.details=t.details,this.hint=t.hint,this.code=t.code}toJSON(){return{name:this.name,message:this.message,details:this.details,hint:this.hint,code:this.code}}};function Ne(t){"@babel/helpers - typeof";return Ne=typeof Symbol=="function"&&typeof Symbol.iterator=="symbol"?function(e){return typeof e}:function(e){return e&&typeof Symbol=="function"&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e},Ne(t)}function zs(t,e){if(Ne(t)!="object"||!t)return t;var r=t[Symbol.toPrimitive];if(r!==void 0){var s=r.call(t,e||"default");if(Ne(s)!="object")return s;throw new TypeError("@@toPrimitive must return a primitive value.")}return(e==="string"?String:Number)(t)}function Js(t){var e=zs(t,"string");return Ne(e)=="symbol"?e:e+""}function Xs(t,e,r){return(e=Js(e))in t?Object.defineProperty(t,e,{value:r,enumerable:!0,configurable:!0,writable:!0}):t[e]=r,t}function vr(t,e){var r=Object.keys(t);if(Object.getOwnPropertySymbols){var s=Object.getOwnPropertySymbols(t);e&&(s=s.filter(function(n){return Object.getOwnPropertyDescriptor(t,n).enumerable})),r.push.apply(r,s)}return r}function ve(t){for(var e=1;e<arguments.length;e++){var r=arguments[e]!=null?arguments[e]:{};e%2?vr(Object(r),!0).forEach(function(s){Xs(t,s,r[s])}):Object.getOwnPropertyDescriptors?Object.defineProperties(t,Object.getOwnPropertyDescriptors(r)):vr(Object(r)).forEach(function(s){Object.defineProperty(t,s,Object.getOwnPropertyDescriptor(r,s))})}return t}function wr(t,e){return new Promise(r=>{if(e!=null&&e.aborted){r();return}let s=setTimeout(()=>{e==null||e.removeEventListener("abort",n),r()},t);function n(){clearTimeout(s),r()}e==null||e.addEventListener("abort",n)})}function Ys(t,e,r,s){return!(!s||r>=3||!br.includes(t)||!Gs.includes(e))}var Qs=class{constructor(t){var e,r,s,n,i;this.shouldThrowOnError=!1,this.retryEnabled=!0,this.method=t.method,this.url=t.url,this.headers=new Headers(t.headers),this.schema=t.schema,this.body=t.body,this.shouldThrowOnError=(e=t.shouldThrowOnError)!==null&&e!==void 0?e:!1,this.signal=t.signal,this.isMaybeSingle=(r=t.isMaybeSingle)!==null&&r!==void 0?r:!1,this.shouldStripNulls=(s=t.shouldStripNulls)!==null&&s!==void 0?s:!1,this.urlLengthLimit=(n=t.urlLengthLimit)!==null&&n!==void 0?n:8e3,this.retryEnabled=(i=t.retry)!==null&&i!==void 0?i:!0,t.fetch?this.fetch=t.fetch:this.fetch=fetch}throwOnError(){return this.shouldThrowOnError=!0,this}stripNulls(){if(this.headers.get("Accept")==="text/csv")throw new Error("stripNulls() cannot be used with csv()");return this.shouldStripNulls=!0,this}setHeader(t,e){return this.headers=new Headers(this.headers),this.headers.set(t,e),this}retry(t){return this.retryEnabled=t,this}then(t,e){var r=this;if(this.schema===void 0||(["GET","HEAD"].includes(this.method)?this.headers.set("Accept-Profile",this.schema):this.headers.set("Content-Profile",this.schema)),this.method!=="GET"&&this.method!=="HEAD"&&this.headers.set("Content-Type","application/json"),this.shouldStripNulls){let o=this.headers.get("Accept");o==="application/vnd.pgrst.object+json"?this.headers.set("Accept","application/vnd.pgrst.object+json;nulls=stripped"):(!o||o==="application/json")&&this.headers.set("Accept","application/vnd.pgrst.array+json;nulls=stripped")}let s=this.fetch,i=(async()=>{let o=0;for(;;){let c={};r.headers.forEach((h,f)=>{c[f]=h}),o>0&&(c["X-Retry-Count"]=String(o));let u;try{u=await s(r.url.toString(),{method:r.method,headers:c,body:JSON.stringify(r.body,(h,f)=>typeof f=="bigint"?f.toString():f),signal:r.signal})}catch(h){if((h==null?void 0:h.name)==="AbortError"||(h==null?void 0:h.code)==="ABORT_ERR"||!br.includes(r.method))throw h;if(r.retryEnabled&&o<3){let f=mr(o);o++,await wr(f,r.signal);continue}throw h}if(Ys(r.method,u.status,o,r.retryEnabled)){var a,l;let h=(a=(l=u.headers)===null||l===void 0?void 0:l.get("Retry-After"))!==null&&a!==void 0?a:null,f=h!==null?Math.max(0,parseInt(h,10)||0)*1e3:mr(o);await u.text(),o++,await wr(f,r.signal);continue}return await r.processResponse(u)}})();return this.shouldThrowOnError||(i=i.catch(o=>{var a;let l="",c="",u="",h=o==null?void 0:o.cause;if(h){var f,d,p,g;let b=(f=h==null?void 0:h.message)!==null&&f!==void 0?f:"",_=(d=h==null?void 0:h.code)!==null&&d!==void 0?d:"";l=`${(p=o==null?void 0:o.name)!==null&&p!==void 0?p:"FetchError"}: ${o==null?void 0:o.message}`,l+=`
 
@@ -332,7 +331,7 @@ const GRADES = {
   "후보자": { fine: false, admin: false, tl: false, color: "n", desc: "시스템 사용 · 벌금 면제" },
   "AP":    { fine: true,  admin: false, tl: false, color: "b", desc: "벌금 적용" },
   "TL":    { fine: true,  admin: false, tl: true,  color: "p", desc: "벌금 적용 · 담당 인원 관리" },
-  "SM":    { fine: true,  admin: true,  tl: true,  color: "g", desc: "관리자 전권" }
+  "SM":    { fine: false, admin: true,  tl: true,  color: "g", desc: "관리자 전권 · 벌금 미적용" }
 };
 const GRADE_ORDER = ["후보자", "AP", "TL", "SM"];
 function gradeOf(u) { return (u && GRADES[u.grade]) ? u.grade : "후보자"; }
@@ -340,14 +339,16 @@ function gradeInfo(u) { return GRADES[gradeOf(u)]; }
 
 /* ============================ 기본 설정값 ============================ */
 const DEFAULT_SETTINGS = {
-  workStart: "08:00",          // 출근 기준 시각
+  checkinOpen: "05:00",        // 이 시각부터 출근 사진 등록 가능
+  workStart: "08:00",          // (기본) 출근 기준 시각
   absentBy: "08:50",           // 이 시각까지 미출근이면 결근 처리
   absentFine: 50000,           // 결근(미출근) 벌금
-  latePerMin: 1000,            // 지각 1분당
-  lateMax: 50000,              // 지각 상한
+  latePerMin: 1000,            // (기본) 지각 1분당
+  lateMax: 50000,              // (기본) 지각 상한
   photoMin: 3,                 // 하루 최소 워킹사진 수
   photoFine: 10000,
-  photoFrom: "10:00",
+  photoFrom: "10:00",          // 워킹사진 인정 시작
+  photoTo: "23:59",            // 워킹사진 인정 종료
   closingFine: 10000,          // 일마감 미실행 벌금
   closingFrom: "13:00",        // 일마감 인정 시작
   closingTo: "23:59",          // 일마감 인정 종료
@@ -361,20 +362,20 @@ const DEFAULT_SETTINGS = {
   account: "은행명 000-0000-0000 예금주",
   startDate: "",
   typeRules: {
-    "출근":    { late: true,  photo: true },
-    "병원근무": { late: true,  photo: true },
-    "직출":    { late: true,  photo: true },
-    "개직":    { late: false, photo: false }
+    "출근":    { late: true,  photo: true,  start: "08:00", perMin: 1000,  max: 50000 },
+    "병원근무": { late: true,  photo: true,  start: "09:00", perMin: 10000, max: 100000 },
+    "직출":    { late: true,  photo: true,  start: "08:00", perMin: 1000,  max: 50000 },
+    "개직":    { late: false, photo: false, start: "08:00", perMin: 1000,  max: 50000 }
   },
   closingForAll: true,
   reportForAll: true
 };
 
 const TYPES = {
-  "출근":    { icon: "🏢", desc: "회사로 출근",             color: "b" },
-  "개직":    { icon: "🌴", desc: "휴가 · 당일 새벽3시까지",  color: "g" },
-  "병원근무": { icon: "🏥", desc: "병원으로 출근",           color: "c" },
-  "직출":    { icon: "🚗", desc: "상담처로 이동 · 사유필수", color: "p" }
+  "출근":    { icon: "🏢", desc: "회사로 출근 · 8시까지",        color: "b" },
+  "개직":    { icon: "🌴", desc: "휴가 · 당일 새벽3시까지",       color: "g" },
+  "병원근무": { icon: "🏥", desc: "병원 출근 · 9시까지 · 병원명", color: "c" },
+  "직출":    { icon: "🚗", desc: "상담처 이동 · 8시까지 · 증빙",  color: "p" }
 };
 
 const KINDS = {
@@ -486,7 +487,7 @@ function computeDay(date, daily, S, H, user) {
   const past = date < today();
   const d = daily || {};
   const type = d.type || null;
-  const rule = (S.typeRules && S.typeRules[type]) || { late: true, photo: true };
+  const rule = typeRule(S, type);
 
   /* 1) 출근보고 — 전날 마감까지 다음날 근무유형 선택 */
   if (S.reportForAll || type !== "개직") {
@@ -504,10 +505,10 @@ function computeDay(date, daily, S, H, user) {
     const upAt = d.checkinAt || null;
     if (upAt) {
       const hm = tsHM(upAt);
-      const diff = hm2min(hm) - hm2min(S.workStart);
+      const diff = hm2min(hm) - hm2min(rule.start);
       if (diff > 0)
-        out.push({ kind: "late", amount: Math.min(diff * S.latePerMin, S.lateMax),
-                   reason: hm + " 등록 · " + diff + "분 지각" });
+        out.push({ kind: "late", amount: Math.min(diff * rule.perMin, rule.max),
+                   reason: hm + " 등록 · 기준 " + rule.start + " 대비 " + diff + "분 초과" });
     } else {
       const cut = atTime(date, S.absentBy || "08:50");
       if (Date.now() > cut)
@@ -518,11 +519,12 @@ function computeDay(date, daily, S, H, user) {
 
   /* 3) 워킹사진 보고 */
   if (rule.photo) {
-    const cnt = (d.photos || []).length;
-    const dayEnd = atTime(date, "23:59");
+    const cnt = photoOkCount(d, date, S);
+    const dayEnd = atTime(date, S.photoTo || "23:59") + 59999;
     if (cnt < S.photoMin && (past || Date.now() > dayEnd || cnt > 0))
       out.push({ kind: "photo", amount: S.photoFine,
-                 reason: "워킹사진 " + cnt + "/" + S.photoMin + "장", pending: !past });
+                 reason: "워킹사진 " + cnt + "/" + S.photoMin + "장 (" + (S.photoFrom || "10:00") + "~" + (S.photoTo || "23:59") + " 인정)",
+                 pending: !past });
   }
 
   /* 4) 일마감 — 당일 13:00~23:59 사이에 저장 1회 이상이면 인정 */
@@ -537,6 +539,29 @@ function computeDay(date, daily, S, H, user) {
                               : "아직 미실행", pending: !past });
   }
   return out;
+}
+
+/** 유형별 출근 규칙 (기준시각 / 분당 / 상한) */
+function typeRule(S, type) {
+  const base = { late: true, photo: true, start: S.workStart, perMin: S.latePerMin, max: S.lateMax };
+  const r = (S.typeRules && S.typeRules[type]) || {};
+  return {
+    late: r.late !== undefined ? r.late : base.late,
+    photo: r.photo !== undefined ? r.photo : base.photo,
+    start: r.start || base.start,
+    perMin: Number(r.perMin || base.perMin),
+    max: Number(r.max || base.max)
+  };
+}
+/** 워킹사진 정규화 — 과거 문자열 배열도 지원 */
+function photoList(d) {
+  return ((d && d.photos) || []).map(x => (typeof x === "string" ? { u: x, at: null } : x)).filter(x => x && x.u);
+}
+/** 인정 시간대(기본 10:00~23:59) 안에 올린 사진 수 */
+function photoOkCount(d, date, S) {
+  const from = atTime(date, S.photoFrom || "10:00");
+  const to = atTime(date, S.photoTo || "23:59") + 59999;
+  return photoList(d).filter(x => x.at == null || (x.at >= from && x.at <= to)).length;
 }
 
 function fineId(uid, date, kind) { return uid + "__" + date + "__" + kind; }
@@ -809,6 +834,7 @@ function collectFines(opt) {
       computeDay(d, daily, S, H, u).forEach(f => {
         const id = fineId(u.uid, d, f.kind);
         const ov = DB.get("fines", id) || {};
+        if (ov.deleted) return;
         list.push({
           id, uid: u.uid, name: u.name, date: d, kind: f.kind,
           amount: ov.amount != null ? ov.amount : f.amount,
@@ -824,7 +850,7 @@ function collectFines(opt) {
     }
   });
 
-  DB.all("fines").filter(f => f.manual).forEach(f => {
+  DB.all("fines").filter(f => f.manual && !f.deleted).forEach(f => {
     if (opt.uid && f.uid !== opt.uid) return;
     if (f.date < (from || "0000") || f.date > to) return;
     const u = DB.get("users", f.uid);
@@ -1212,26 +1238,28 @@ function viewHome() {
 
   /* 오늘 체크리스트 */
   if (wToday) {
-    const rule = S.typeRules[dToday.type] || { late: true, photo: true };
+    const rule = typeRule(S, dToday.type);
     const items = [];
     if (rule.late) {
       const at = dToday.checkinAt;
       const hm = tsHM(at);
-      const diff = at ? hm2min(hm) - hm2min(S.workStart) : null;
+      const diff = at ? hm2min(hm) - hm2min(rule.start) : null;
       const absentCut = atTime(tdy, S.absentBy);
       items.push({
         t: "출근 사진", ic: "📸",
         ok: at ? diff <= 0 : null,
         bad: at ? diff > 0 : Date.now() > absentCut,
-        d: at ? (hm + " 등록" + (diff > 0 ? " · " + diff + "분 지각 " + won(Math.min(diff * S.latePerMin, S.lateMax)) : " · 정상"))
-              : (Date.now() > absentCut ? "미출근 " + won(S.absentFine) + " 대상" : S.workStart + " 까지 사진을 올려주세요"),
+        d: at ? (hm + " 등록" + (diff > 0 ? " · 기준 " + rule.start + " 초과 " + diff + "분 · " + won(Math.min(diff * rule.perMin, rule.max)) : " · 정상"))
+              : (Date.now() > absentCut ? "미출근 " + won(S.absentFine) + " 대상" : rule.start + " 까지 사진을 올려주세요"),
         act: at ? null : "checkin"
       });
     }
     if (rule.photo) {
-      const c = (dToday.photos || []).length;
+      const c = photoOkCount(dToday, tdy, S);
       items.push({ t: "워킹사진 " + c + "/" + S.photoMin, ic: "🖼",
-        ok: c >= S.photoMin, d: c >= S.photoMin ? "완료" : "부족시 " + won(S.photoFine), act: c >= S.photoMin ? null : "report" });
+        ok: c >= S.photoMin,
+        d: c >= S.photoMin ? "완료" : (S.photoFrom || "10:00") + "~" + (S.photoTo || "23:59") + " 인정 · 부족시 " + won(S.photoFine),
+        act: c >= S.photoMin ? null : "report" });
     }
     if (S.closingForAll || dToday.type !== "개직") {
       const from = atTime(tdy, S.closingFrom), to = atTime(tdy, S.closingTo) + 59000;
@@ -1299,7 +1327,7 @@ function fineRow(f) {
     '<div style="margin-top:3px">' + fineBadge(f) + "</div></div></div>";
 }
 function fineBadge(f) {
-  if (f.waived) return '<span class="bdg n">면제</span>';
+  if (f.waived) return '<span class="bdg c">포인트납입</span>';
   if (f.pending) return '<span class="bdg y">진행중</span>';
   if (f.status === "paid") return '<span class="bdg g">납부완료</span>';
   if (f.status === "submitted") return '<span class="bdg c">확인대기</span>';
@@ -1316,7 +1344,7 @@ function viewCheckin() {
   const wd = isWorkday(date, H), hn = holidayName(date, H);
   const me = DB.get("daily", dayId(p.uid, date)) || {};
   const isToday = date === tdy;
-  const myRule = S.typeRules[me.type] || { late: true, photo: true };
+  const myRule = typeRule(S, me.type);
 
   let h = "";
 
@@ -1331,15 +1359,20 @@ function viewCheckin() {
     (hn ? '<span class="bdg y">' + esc(hn) + "</span>" : "") +
     '<div style="flex:1"></div>' +
     (admin ? '<button class="btn sm" id="ckHol">' + (wd ? "휴무일로" : "근무일로") + "</button>" : "") + "</div>" +
-    '<div class="hint" style="margin-top:8px">기준 ' + S.workStart + " · 1분당 " + won(S.latePerMin) +
-    " · 최대 " + won(S.lateMax) + " · " + S.absentBy + " 미등록시 미출근 " + won(S.absentFine) + "</div></div>";
+    '<div class="hint" style="margin-top:8px">등록 가능 ' + (S.checkinOpen || "05:00") + " 부터 · " +
+    Object.keys(TYPES).filter(t => typeRule(S, t).late).map(t => {
+      const r = typeRule(S, t);
+      return t + " " + r.start + "(분당 " + (r.perMin / 10000 >= 1 ? (r.perMin / 10000) + "만" : (r.perMin / 1000) + "천") + "원·최대 " + (r.max / 10000) + "만)";
+    }).join(" · ") + " · " + S.absentBy + " 미등록시 미출근 " + won(S.absentFine) + "</div></div>";
 
   /* 내 출근 등록 */
   if (wd && myRule.late) {
     const at = me.checkinAt, hm = tsHM(at);
-    const diff = at ? hm2min(hm) - hm2min(S.workStart) : null;
-    const fine = diff > 0 ? Math.min(diff * S.latePerMin, S.lateMax) : 0;
+    const diff = at ? hm2min(hm) - hm2min(myRule.start) : null;
+    const fine = diff > 0 ? Math.min(diff * myRule.perMin, myRule.max) : 0;
     const overCut = Date.now() > atTime(date, S.absentBy);
+    const openTs = atTime(date, S.checkinOpen || "05:00");
+    const beforeOpen = isToday && Date.now() < openTs;
 
     h += '<div class="card"><div class="card-h"><h3>📸 내 출근</h3><div class="sp"></div>' +
       (at ? (diff > 0 ? '<span class="bdg r">' + diff + "분 지각</span>" : '<span class="bdg g">정상 출근</span>')
@@ -1347,16 +1380,19 @@ function viewCheckin() {
 
     if (at) {
       h += '<div class="banner ' + (diff > 0 ? "d" : "s") + '">' +
-        "등록 시각 <b>" + hm + "</b>" +
-        (diff > 0 ? " · 기준(" + S.workStart + ") 대비 <b>" + diff + "분</b> 초과 → 벌금 <b>" + won(fine) + "</b>"
-                  : " · 기준 시각 내 정상 출근입니다 👍") + "</div>";
+        "등록 시각 <b>" + hm + "</b> · " + (me.type || "출근") + " 기준 <b>" + myRule.start + "</b>" +
+        (diff > 0 ? " 대비 <b>" + diff + "분</b> 초과 → 벌금 <b>" + won(fine) + "</b>"
+                  : " 내 정상 출근입니다 👍") + "</div>";
       if (me.checkinPhoto)
         h += '<img src="' + me.checkinPhoto + '" class="thumb" style="margin-bottom:10px" data-img="' + me.checkinPhoto + '" data-imgt="내 출근 · ' + hm + '">';
       if (isToday) h += '<button class="btn full sm" id="ckReUp">사진 다시 올리기</button>';
     } else if (isToday) {
-      h += (overCut ? '<div class="banner d">⚠️ ' + S.absentBy + " 이 지났습니다. 지금 등록해도 <b>미출근 " + won(S.absentFine) + "</b> 대상입니다.</div>" : "") +
-        '<div class="upl" id="ckUp"><div class="ic">📷</div><div class="t">회사 도착 사진 올리기</div>' +
-        '<div class="s">올린 시각이 출근 시각으로 기록됩니다</div></div>';
+      h += (beforeOpen
+        ? '<div class="banner w">🕔 출근 등록은 <b>' + (S.checkinOpen || "05:00") + '</b> 부터 가능합니다.</div>'
+        : (overCut ? '<div class="banner d">⚠️ ' + S.absentBy + " 이 지났습니다. 지금 등록해도 <b>미출근 " + won(S.absentFine) + "</b> 대상입니다.</div>" : "")) +
+        '<div class="upl" id="ckUp" style="' + (beforeOpen ? "opacity:.5;pointer-events:none" : "") + '"><div class="ic">📷</div>' +
+        '<div class="t">' + (me.type === "병원근무" ? "병원 도착 사진 올리기" : me.type === "직출" ? "상담처 도착 사진 올리기" : "회사 도착 사진 올리기") + "</div>" +
+        '<div class="s">올린 시각이 출근 시각으로 기록됩니다 · 기준 ' + myRule.start + "</div></div>";
     } else {
       h += '<div class="banner d">이 날은 출근 사진이 등록되지 않았습니다.</div>';
       if (admin) h += '<div class="hint">관리자는 아래 목록에서 시각을 직접 입력할 수 있습니다.</div>';
@@ -1368,9 +1404,9 @@ function viewCheckin() {
   const users = ACTIVE_USERS();
   const rows = users.map(u => {
     const d = DB.get("daily", dayId(u.uid, date)) || {};
-    const r = S.typeRules[d.type] || { late: true, photo: true };
+    const r = typeRule(S, d.type);
     const at = d.checkinAt, hm = tsHM(at);
-    const diff = at ? hm2min(hm) - hm2min(S.workStart) : null;
+    const diff = at ? hm2min(hm) - hm2min(r.start) : null;
     return { u, d, r, at, hm, diff };
   }).sort((a, b) => (a.at || 9e15) - (b.at || 9e15));
 
@@ -1379,20 +1415,29 @@ function viewCheckin() {
     (rows.length ? rows.map(r => {
       const late = r.diff > 0;
       const exempt = !r.r.late || !gradeInfo(r.u).fine;
-      return '<div class="row">' +
+      const extra = [];
+      if (r.d.type === "병원근무" && r.d.hospital) extra.push("🏥 " + esc(r.d.hospital));
+      if (r.d.type === "직출" && r.d.reason) extra.push("🚗 " + esc(r.d.reason));
+      return '<div style="border-bottom:1px solid var(--line)"><div class="row" style="border-bottom:none">' +
         (r.d.checkinPhoto
-          ? '<img src="' + r.d.checkinPhoto + '" class="thumb sm" style="cursor:pointer" data-img="' + r.d.checkinPhoto + '" data-imgt="' + esc(r.u.name) + ' · ' + (r.hm || "") + '">'
+          ? '<img src="' + r.d.checkinPhoto + '" class="thumb sm" style="cursor:pointer" data-img="' + r.d.checkinPhoto + '" data-imgt="' + esc(r.u.name) + ' 출근 · ' + (r.hm || "") + '">'
           : '<div class="thumb sm" style="display:flex;align-items:center;justify-content:center;color:var(--tx3);font-size:20px">—</div>') +
         '<div class="sp"><div class="nm">' + esc(r.u.name) +
         (r.d.type ? ' <span class="bdg ' + TYPES[r.d.type].color + '">' + r.d.type + "</span>" : "") + "</div>" +
-        '<div class="ds">' + (r.at ? "등록 " + r.hm + (late ? " · " + r.diff + "분 지각" : " · 정상") : "미등록") + "</div></div>" +
+        '<div class="ds">' + (r.at ? "등록 " + r.hm + " · 기준 " + r.r.start + (late ? " · " + r.diff + "분 초과" : " · 정상") : "미등록") + "</div></div>" +
         '<div style="text-align:right">' +
-        (exempt ? '<span class="bdg n">면제</span>'
-          : r.at ? (late ? '<span class="bdg r">' + won(Math.min(r.diff * S.latePerMin, S.lateMax)) + "</span>" : '<span class="bdg g">정상</span>')
+        (exempt ? '<span class="bdg n">미적용</span>'
+          : r.at ? (late ? '<span class="bdg r">' + won(Math.min(r.diff * r.r.perMin, r.r.max)) + "</span>" : '<span class="bdg g">정상</span>')
           : (Date.now() > atTime(date, S.absentBy) ? '<span class="bdg r">미출근</span>' : '<span class="bdg y">대기</span>')) +
         (admin ? '<div style="margin-top:5px"><input class="inp" type="time" style="padding:4px 6px;font-size:11.5px;width:98px" value="' +
           (r.hm || "") + '" data-ct="' + r.u.uid + '"></div>' : "") +
-        "</div></div>";
+        "</div></div>" +
+        (extra.length || r.d.reasonPhoto
+          ? '<div style="padding:0 14px 12px 14px">' +
+            (extra.length ? '<div class="banner i" style="margin:0 0 8px;font-size:12px">' + extra.join("<br>") + "</div>" : "") +
+            (r.d.reasonPhoto ? '<img src="' + r.d.reasonPhoto + '" class="thumb" style="max-width:220px;cursor:pointer" data-img="' + r.d.reasonPhoto + '" data-imgt="' + esc(r.u.name) + ' 직출 증빙">' : "") +
+            "</div>" : "") +
+        "</div>";
     }).join("") : '<div class="empty">승인된 팀원이 없습니다</div>') + "</div>";
 
   if (admin) h += '<div class="hint" style="margin-top:8px">관리자는 시각 칸을 직접 고쳐 저장할 수 있습니다. 비우면 미등록 처리됩니다.</div>';
@@ -1420,6 +1465,8 @@ function bindCheckin() {
   const re = $("#ckReUp"); if (re) re.onclick = doUpload;
   if (file) file.onchange = async e => {
     const f = e.target.files[0]; if (!f) return;
+    const openTs = atTime(today(), S.checkinOpen || "05:00");
+    if (Date.now() < openTs) { e.target.value = ""; return toast("출근 등록은 " + (S.checkinOpen || "05:00") + " 부터 가능합니다", "err"); }
     try {
       toast("사진 처리 중…");
       const raw = await compressImage(f, 900, .72);
@@ -1428,10 +1475,11 @@ function bindCheckin() {
       await DB.set("daily", dayId(p.uid, today()), {
         uid: p.uid, date: today(), checkinPhoto: url, checkinAt: now, updatedAt: now
       });
-      const diff = hm2min(tsHM(now)) - hm2min(S.workStart);
+      const myR = typeRule(S, (DB.get("daily", dayId(p.uid, today())) || {}).type);
+      const diff = hm2min(tsHM(now)) - hm2min(myR.start);
       if (diff > 0) {
-        const amt = Math.min(diff * S.latePerMin, S.lateMax);
-        toast(diff + "분 지각 · " + won(amt), "err");
+        const amt = Math.min(diff * myR.perMin, myR.max);
+        toast("기준 " + myR.start + " 초과 " + diff + "분 · " + won(amt), "err");
         App.payShown = false;
         setTimeout(() => { const l = unpaidOf(p.uid); if (l.length) openPayModal(l, true); }, 700);
       } else toast("정상 출근 등록 완료 👍", "ok");
@@ -1487,9 +1535,19 @@ function viewReport() {
       '<div class="td">' + info.desc + (t === "개직" ? " · 잔여 " + Number(p.gaejik || 0) + "개" : "") + "</div></button>";
   }).join("") + "</div>";
 
-  h += '<div class="fld ' + (d.type === "직출" ? "" : "hide") + '" id="reasonWrap" style="margin-top:13px">' +
-    '<label>직출 사유 (필수)</label>' +
-    '<input class="inp" id="rReason" placeholder="예: OO병원 상담 · 14시" value="' + esc(d.reason || "") + '"></div>';
+  h += '<div class="fld ' + (d.type === "병원근무" ? "" : "hide") + '" id="hospWrap" style="margin-top:13px">' +
+    '<label>병원명 (필수)</label>' +
+    '<input class="inp" id="rHosp" placeholder="예: OO정형외과 / OO병원 3층" value="' + esc(d.hospital || "") + '">' +
+    '<div class="hint">기준 출근 시각은 ' + typeRule(S, "병원근무").start + " 입니다.</div></div>";
+
+  h += '<div class="' + (d.type === "직출" ? "" : "hide") + '" id="reasonWrap" style="margin-top:13px">' +
+    '<div class="fld"><label>직출 사유 (필수)</label>' +
+    '<textarea class="inp" id="rReason" placeholder="예) 고객과의 일정 잡는 통화목록 / 연락 사진 첨부&#10;OO고객 10시 방문상담 · 어제 21시 통화 완료">' + esc(d.reason || "") + "</textarea></div>" +
+    '<div class="fld"><label>증빙 이미지 (통화목록 · 연락 캡쳐)</label>' +
+    (d.reasonPhoto ? '<img src="' + d.reasonPhoto + '" class="thumb" style="margin-bottom:8px" data-img="' + d.reasonPhoto + '" data-imgt="직출 증빙">' : "") +
+    '<div class="upl" id="rzUp"><div class="ic">📎</div><div class="t">' + (d.reasonPhoto ? "이미지 다시 올리기" : "이미지 올리기") + "</div>" +
+    '<div class="s">통화목록 또는 고객 연락 캡쳐를 첨부해주세요</div></div>' +
+    '<input type="file" accept="image/*" id="rzFile" class="hide"></div></div>';
   h += '<button class="btn pri full" id="rSave" style="margin-top:14px">' + (d.type ? "보고 수정" : "보고 제출") + "</button>";
   if (d.type) h += '<div class="hint" style="text-align:center;margin-top:9px">✅ ' + d.type +
     " 로 제출됨 · " + tsFmtFull(d.reportAt) + (d.gaejikUsed ? " · 개직 1개 차감" : "") +
@@ -1501,15 +1559,24 @@ function viewReport() {
 
     /* 워킹사진 */
     if (rule.photo) {
-      const photos = dT.photos || [];
+      const photos = photoList(dT);
+      const okCnt = photoOkCount(dT, tdy, S);
+      const pFrom = atTime(tdy, S.photoFrom || "10:00"), pTo = atTime(tdy, S.photoTo || "23:59") + 59999;
+      const inWin = Date.now() >= pFrom && Date.now() <= pTo;
       h += '<div class="sec-t">워킹사진 보고 · ' + fmtD(tdy) + "</div>" +
         '<div class="card"><div class="card-h"><h3>🖼 워킹사진</h3><div class="sp"></div>' +
-        (photos.length >= S.photoMin ? '<span class="bdg g">완료</span>' : '<span class="bdg y">' + photos.length + "/" + S.photoMin + "</span>") + "</div>" +
-        '<div class="hint" style="margin:-6px 0 12px">오전 ' + S.photoFrom + " 이후 활동사진을 " + S.photoMin +
-        "장 이상 올리면 자동으로 완료됩니다. 미달 시 " + won(S.photoFine) + ".</div>" +
+        (okCnt >= S.photoMin ? '<span class="bdg g">완료</span>' : '<span class="bdg y">' + okCnt + "/" + S.photoMin + "</span>") + "</div>" +
+        '<div class="banner ' + (okCnt >= S.photoMin ? "s" : inWin ? "i" : "w") + '">인정 시간 <b>' +
+        (S.photoFrom || "10:00") + " ~ " + (S.photoTo || "23:59") + "</b> · " + S.photoMin + "장 이상이면 자동 완료 · 미달 시 " + won(S.photoFine) +
+        (inWin ? "" : "<br>지금은 인정 시간이 아닙니다. 올려도 집계에 포함되지 않습니다.") + "</div>" +
         '<div class="photo-grid">' +
-        photos.map((src, i) => '<div class="ph"><img src="' + src + '" data-img="' + src + '" data-imgt="워킹사진 ' + (i + 1) + '">' +
-          '<button class="x" data-delph="' + i + '">✕</button></div>').join("") +
+        photos.map((x, i) => {
+          const good = x.at == null || (x.at >= pFrom && x.at <= pTo);
+          return '<div class="ph" style="' + (good ? "" : "opacity:.45") + '"><img src="' + x.u + '" data-img="' + x.u + '" data-imgt="워킹사진 ' + (i + 1) + (x.at ? " · " + tsHM(x.at) : "") + '">' +
+            '<button class="x" data-delph="' + i + '">✕</button>' +
+            (x.at ? '<div style="position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);color:#fff;font-size:9.5px;text-align:center;padding:2px">' +
+              tsHM(x.at) + (good ? "" : " 미인정") + "</div>" : "") + "</div>";
+        }).join("") +
         (photos.length < 12 ? '<button class="add" id="phAdd"><span style="font-size:20px">＋</span>사진 추가</button>' : "") +
         "</div>" +
         '<input type="file" accept="image/*" id="phFile" class="hide" multiple></div>';
@@ -1561,7 +1628,7 @@ function viewReport() {
       return "<tr data-open-day='" + r.ds + "' data-uid='" + p.uid + "' style='cursor:pointer'><td>" + fmtD(r.ds) + "</td>" +
         "<td>" + (r.dd.type ? '<span class="bdg ' + TYPES[r.dd.type].color + '">' + r.dd.type + "</span>" : '<span class="bdg r">미보고</span>') + "</td>" +
         "<td class='mono'>" + (tsHM(r.dd.checkinAt) || "-") + "</td>" +
-        "<td class='num'>" + ((r.dd.photos || []).length) + "</td>" +
+        "<td class='num'>" + photoOkCount(r.dd, r.ds, S) + "</td>" +
         "<td>" + (cs >= from && cs <= to ? "✅" : "—") + "</td></tr>";
     }).join("") : "<tr><td colspan='5'><div class='empty'>기록 없음</div></td></tr>") +
     "</tbody></table></div></div>";
@@ -1578,13 +1645,30 @@ function bindReport() {
     sel = b.dataset.type;
     $$("[data-type]").forEach(x => x.classList.toggle("on", x.dataset.type === sel));
     $("#reasonWrap").classList.toggle("hide", sel !== "직출");
+    $("#hospWrap").classList.toggle("hide", sel !== "병원근무");
   });
+
+  /* 직출 증빙 이미지 */
+  const rzUp = $("#rzUp"), rzFile = $("#rzFile");
+  if (rzUp) rzUp.onclick = () => rzFile.click();
+  if (rzFile) rzFile.onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      toast("이미지 처리 중…");
+      const raw = await compressImage(f, 900, .72);
+      const url = await DB.uploadImage(raw, "reason");
+      await DB.set("daily", dayId(p.uid, rDate), { uid: p.uid, date: rDate, reasonPhoto: url, updatedAt: Date.now() });
+      toast("증빙 이미지 첨부됨", "ok");
+    } catch (er) { toast(cleanErr(er), "err"); }
+  };
 
   const sv = $("#rSave");
   if (sv) sv.onclick = async () => {
     if (!sel) return toast("근무 유형을 선택해주세요", "err");
     const reason = $("#rReason") ? $("#rReason").value.trim() : "";
-    if (sel === "직출" && !reason) return toast("직출은 개인 사유를 반드시 입력해주세요", "err");
+    const hosp = $("#rHosp") ? $("#rHosp").value.trim() : "";
+    if (sel === "직출" && !reason) return toast("직출은 사유를 반드시 입력해주세요", "err");
+    if (sel === "병원근무" && !hosp) return toast("병원근무는 병원명을 입력해주세요", "err");
     const cur = DB.get("daily", dayId(p.uid, rDate)) || {};
     const wasUsed = !!cur.gaejikUsed;
     let used = wasUsed;
@@ -1597,7 +1681,9 @@ function bindReport() {
         await changeGaejik(p.uid, +1, "개직 취소 · " + fmtDL(rDate) + " → " + sel); used = false;
       }
       await DB.set("daily", dayId(p.uid, rDate), {
-        uid: p.uid, date: rDate, type: sel, reason: sel === "직출" ? reason : "",
+        uid: p.uid, date: rDate, type: sel,
+        reason: sel === "직출" ? reason : "",
+        hospital: sel === "병원근무" ? hosp : "",
         reportAt: Date.now(), gaejikUsed: used, updatedAt: Date.now()
       });
       const dl = reportDeadlineTs(rDate, sel, S);
@@ -1613,21 +1699,22 @@ function bindReport() {
     try {
       toast("사진 " + files.length + "장 처리 중…");
       const cur = DB.get("daily", dayId(p.uid, tdy)) || {};
-      const arr = (cur.photos || []).slice();
+      const arr = photoList(cur);
       for (const f of files) {
         const raw = await compressImage(f, 800, .7);
-        arr.push(await DB.uploadImage(raw, "walk"));
+        arr.push({ u: await DB.uploadImage(raw, "walk"), at: Date.now() });
       }
       await DB.set("daily", dayId(p.uid, tdy), {
         uid: p.uid, date: tdy, photos: arr, photoAt: Date.now(), updatedAt: Date.now()
       });
-      toast(arr.length >= S.photoMin ? "워킹사진 " + arr.length + "장 · 완료 👍" : "저장됨 · " + S.photoMin + "장 이상 필요", arr.length >= S.photoMin ? "ok" : "err");
+      const ok = photoOkCount({ photos: arr }, tdy, S);
+      toast(ok >= S.photoMin ? "워킹사진 " + ok + "장 · 완료 👍" : "저장됨 · 인정 " + ok + "/" + S.photoMin + "장", ok >= S.photoMin ? "ok" : "err");
     } catch (er) { toast(cleanErr(er), "err"); }
   };
   $$("[data-delph]").forEach(b => b.onclick = async () => {
     const i = Number(b.dataset.delph);
     const cur = DB.get("daily", dayId(p.uid, tdy)) || {};
-    const arr = (cur.photos || []).slice(); arr.splice(i, 1);
+    const arr = photoList(cur); arr.splice(i, 1);
     await DB.set("daily", dayId(p.uid, tdy), { uid: p.uid, date: tdy, photos: arr, updatedAt: Date.now() });
     toast("삭제됨");
   });
@@ -1692,7 +1779,7 @@ function viewFines() {
     '<div class="stat acc-g"><div class="lb">납부완료</div><div class="vl" style="font-size:18px">' + won(sumFines(all, f => f.status === "paid")) + "</div></div></div>";
 
   h += '<div class="seg sm" style="margin:14px 0 12px">' +
-    [["unpaid", "미납"], ["submitted", "확인대기"], ["paid", "완료"], ["waived", "면제"], ["all", "전체"]]
+    [["unpaid", "미납"], ["submitted", "확인대기"], ["paid", "완료"], ["waived", "포인트납입"], ["all", "전체"]]
       .map(([k, t]) => '<button data-ftab="' + k + '" class="' + (tab === k ? "on" : "") + '">' + t + "</button>").join("") + "</div>";
 
   h += '<div class="btn-row" style="margin-bottom:12px">' +
@@ -1713,7 +1800,8 @@ function viewFines() {
       (admin ? '<button class="btn xs" id="copyBill">📋 정산문구</button>' : "") +
       (tab === "unpaid" ? '<button class="btn xs pri" id="payBtn">💸 납부 캡쳐</button>' : "") +
       (admin && tab === "submitted" ? '<button class="btn xs ok" id="confirmBtn">✅ 납부확인</button>' : "") +
-      (admin ? '<button class="btn xs" id="waiveBtn">면제</button>' : "") + "</div>";
+      (admin ? '<button class="btn xs" id="waiveBtn">🎫 포인트납입</button>' : "") +
+      (admin ? '<button class="btn xs dan" id="delBtn">삭제</button>' : "") + "</div>";
   }
 
   const LCAP = 80;
@@ -1774,12 +1862,26 @@ function bindFines() {
     const ps = picked(); if (!ps.length) return toast("항목을 선택해주세요", "err");
     const on = !ps[0].waived;
     for (const f of ps) await DB.set("fines", f.id, Object.assign(baseFine(f), { waived: on }));
-    fineSel.clear(); toast(ps.length + "건 " + (on ? "면제" : "면제 해제"), "ok");
+    fineSel.clear(); toast(ps.length + "건 " + (on ? "포인트납입 처리" : "포인트납입 해제"), "ok");
+  };
+  const db = $("#delBtn");
+  if (db) db.onclick = () => {
+    const ps = picked(); if (!ps.length) return toast("항목을 선택해주세요", "err");
+    confirmM("선택한 <b>" + ps.length + "건</b>을 삭제합니다.<br>삭제한 벌금은 목록·합계·순위에서 모두 사라집니다.", async () => {
+      for (const f of ps) await deleteFine(f);
+      fineSel.clear(); toast(ps.length + "건 삭제됨", "ok");
+    });
   };
 }
 
 function baseFine(f) {
   return { id: f.id, uid: f.uid, date: f.date, kind: f.kind, amount: f.amount, memo: f.reason, manual: !f.auto };
+}
+/** SM 전용 — 벌금 삭제 */
+async function deleteFine(f) {
+  if (!Auth.isAdmin()) throw new Error("권한이 없습니다");
+  if (f.auto) await DB.set("fines", f.id, Object.assign(baseFine(f), { deleted: true, deletedAt: Date.now(), deletedBy: Auth.profile.name }));
+  else await DB.del("fines", f.id);
 }
 
 function billText(fines) {
@@ -1872,12 +1974,13 @@ function openFineModal(id) {
         '<div class="divider"></div>' +
         '<div class="fld"><label>금액 조정</label><input class="inp" type="number" id="feAmt" value="' + f.amount + '"></div>' +
         '<div class="fld"><label>사유 / 메모</label><input class="inp" id="feMemo" value="' + esc(f.reason) + '"></div>' +
-        '<div class="fld"><label style="display:flex;align-items:center;gap:10px">면제 처리' +
-        '<label class="sw"><input type="checkbox" id="feWaive"' + (f.waived ? " checked" : "") + '><span class="tr"></span></label></label></div>' +
+        '<div class="fld"><label style="display:flex;align-items:center;gap:10px">포인트납입 처리' +
+        '<label class="sw"><input type="checkbox" id="feWaive"' + (f.waived ? " checked" : "") + '><span class="tr"></span></label></label>' +
+        '<div class="hint">포인트로 대신 납입한 건입니다. 현금 합계에서 제외됩니다.</div></div>' +
         '<div class="fld"><label>납부 상태</label><select class="inp" id="feSt">' +
         [["unpaid", "미납"], ["submitted", "확인대기"], ["paid", "납부완료"]].map(([k, t]) =>
           "<option value='" + k + "'" + (f.status === k ? " selected" : "") + ">" + t + "</option>").join("") + "</select></div>" +
-        (f.auto ? "" : '<button class="btn dan full sm" id="feDel">이 벌금 삭제</button>')
+        '<button class="btn dan full sm" id="feDel">이 벌금 삭제</button>' 
         : (f.status === "unpaid" ? '<button class="btn pri full" id="fePay">💸 납부 캡쳐 올리기</button>' : "")),
     okText: admin ? "저장" : null,
     onOk: admin ? async () => {
@@ -1894,7 +1997,10 @@ function openFineModal(id) {
     } : null,
     after: () => {
       $$("[data-img]", $("#ovl")).forEach(b => b.onclick = () => openImage(b.dataset.img, b.dataset.imgt));
-      const dl = $("#feDel"); if (dl) dl.onclick = () => { DB.del("fines", f.id); closeModal(); toast("삭제됨"); };
+      const dl = $("#feDel");
+      if (dl) dl.onclick = () => confirmM("이 벌금을 삭제합니다. 목록·합계·순위에서 사라집니다.", async () => {
+        await deleteFine(f); closeModal(); toast("삭제됨", "ok");
+      });
       const py = $("#fePay"); if (py) py.onclick = () => { closeModal(); openPayModal([f]); };
     }
   });
@@ -1942,17 +2048,21 @@ function openDayModal(date, uid) {
       '<span class="bdg ' + (isWorkday(date, H) ? "b" : "n") + '">' + (isWorkday(date, H) ? "근무일" : "휴무일") + "</span>" +
       (d.type ? '<span class="bdg ' + TYPES[d.type].color + '">' + TYPES[d.type].icon + " " + d.type + "</span>" : '<span class="bdg r">미보고</span>') +
       '<span class="bdg ' + gradeInfo(u).color + '">' + esc(gradeOf(u)) + "</span></div>" +
-      (d.reason ? (canSee ? '<div class="banner i">직출 사유: <b>' + esc(d.reason) + "</b></div>"
-                          : '<div class="banner n">직출 사유는 담당 TL·관리자만 볼 수 있습니다.</div>') : "") +
+      (d.hospital ? '<div class="banner i">🏥 병원: <b>' + esc(d.hospital) + "</b></div>" : "") +
+      (d.reason ? (canSee ? '<div class="banner i">🚗 직출 사유: <b>' + esc(d.reason) + "</b></div>"
+                          : '<div class="banner w">직출 사유는 담당 TL·관리자만 볼 수 있습니다.</div>') : "") +
+      (d.reasonPhoto && canSee ? '<div class="fld"><label>직출 증빙</label><img src="' + d.reasonPhoto + '" class="thumb" data-img="' + d.reasonPhoto + '" data-imgt="직출 증빙"></div>' : "") +
       '<div class="grid g2" style="margin-bottom:14px">' +
       '<div class="stat"><div class="lb">출근 등록</div><div class="vl" style="font-size:19px">' + (tsHM(d.checkinAt) || "-") + "</div>" +
       '<div class="sub">기준 ' + S.workStart + "</div></div>" +
       '<div class="stat"><div class="lb">워킹사진</div><div class="vl" style="font-size:19px">' +
-      ((d.photos || []).length) + "<span style='font-size:13px;color:var(--tx3)'>/" + S.photoMin + "</span></div>" +
+      photoOkCount(d, date, S) + "<span style='font-size:13px;color:var(--tx3)'>/" + S.photoMin + "</span></div>" +
       '<div class="sub">' + (cs >= from && cs <= to ? "일마감 완료" : "일마감 미완료") + "</div></div></div>" +
       (d.checkinPhoto ? '<div class="fld"><label>출근 사진</label><img src="' + d.checkinPhoto + '" class="thumb" data-img="' + d.checkinPhoto + '"></div>' : "") +
-      ((d.photos || []).length ? '<div class="fld"><label>워킹사진</label><div class="photo-grid">' +
-        d.photos.map((s, i) => '<div class="ph"><img src="' + s + '" data-img="' + s + '" data-imgt="워킹사진 ' + (i + 1) + '"></div>').join("") + "</div></div>" : "") +
+      (photoList(d).length ? '<div class="fld"><label>워킹사진</label><div class="photo-grid">' +
+        photoList(d).map((x, i) => '<div class="ph"><img src="' + x.u + '" data-img="' + x.u + '" data-imgt="워킹사진 ' + (i + 1) + '">' +
+          (x.at ? '<div style="position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);color:#fff;font-size:9.5px;text-align:center;padding:2px">' + tsHM(x.at) + "</div>" : "") +
+          "</div>").join("") + "</div></div>" : "") +
       (canSee && (d.closingItems || []).length ? '<div class="fld"><label>일마감 체크리스트 · ' + tsFmt(cs) + "</label>" +
         d.closingItems.map(it => '<div class="ck ' + (it.done ? "done" : "") + '" style="margin-bottom:5px">' +
           '<div class="box">' + (it.done ? "✓" : "") + '</div><div class="tx">' + esc(it.t) + "</div></div>").join("") + "</div>"
@@ -2005,8 +2115,10 @@ function viewCal() {
     const fs = (byDate[ds] || []).slice().sort((a, b) => a.name.localeCompare(b.name, "ko"));
     h += '<div class="cel' + (wd ? "" : " off") + (ds === tdy ? " tod" : "") + (hn ? " hol" : "") + '" data-cal="' + ds + '">' +
       '<div class="dn ' + (w === 0 ? "s" : w === 6 ? "u" : "") + '">' + day + "</div>" +
-      fs.map(f => '<div class="ev ' + (f.waived ? "b" : f.status === "paid" ? "g" : (KINDS[f.kind] || KINDS.etc).color) + '">' +
-        esc(f.name) + "<br>" + (KINDS[f.kind] || KINDS.etc).label + "<br>" + (f.amount || 0).toLocaleString("ko-KR") + "</div>").join("") +
+      fs.map(f => '<div class="ev ' + (f.waived ? "c" : f.status === "paid" ? "g" : (KINDS[f.kind] || KINDS.etc).color) + '" style="position:relative;padding-right:16px">' +
+        esc(f.name) + "<br>" + (KINDS[f.kind] || KINDS.etc).label + "<br>" + (f.amount || 0).toLocaleString("ko-KR") +
+        (Auth.isAdmin() ? '<button data-calx="' + f.id + '" title="삭제" style="position:absolute;top:2px;right:2px;width:14px;height:14px;border-radius:4px;background:rgba(0,0,0,.2);color:#fff;font-size:9px;line-height:1;display:flex;align-items:center;justify-content:center">✕</button>' : "") +
+        "</div>").join("") +
       "</div>";
   }
   h += "</div></div>";
@@ -2030,6 +2142,13 @@ function bindCal() {
   const cu = $("#calU"); if (cu) cu.onchange = e => { calUser = e.target.value; render(); };
   $$("[data-cal]").forEach(c => c.onclick = () => openCalDay(c.dataset.cal));
   $$("[data-open-fine]").forEach(b => b.onclick = () => openFineModal(b.dataset.openFine));
+  $$("[data-calx]").forEach(b => b.onclick = ev => {
+    ev.stopPropagation();
+    const f = collectFines({}).find(x => x.id === b.dataset.calx);
+    if (!f) return;
+    confirmM("<b>" + esc(f.name) + "</b> · " + fmtD(f.date) + " " + (KINDS[f.kind] || KINDS.etc).label +
+      " " + won(f.amount) + "<br>이 벌금을 삭제할까요?", async () => { await deleteFine(f); toast("삭제됨", "ok"); });
+  });
 }
 
 function openCalDay(date) {
@@ -2173,14 +2292,15 @@ function openGaejikModal(uid) {
       '<div class="vl">' + Number(u.gaejik || 0) + "개</div></div>" +
       '<div class="fld"><label>증감</label>' +
       '<div class="cnt"><button id="gjM">−</button><div class="v" id="gjV">+1</div><button id="gjP">＋</button></div></div>' +
-      '<div class="fld"><label>사유 (로그에 기록됩니다)</label><input class="inp" id="gjR" placeholder="예: 특별 포상"></div>' +
+      '<div class="fld"><label>사유 <span style="color:var(--tx3);font-weight:600">(선택 · 비우면 "관리자 지급")</span></label>' +
+      '<input class="inp" id="gjR" placeholder="예: 특별 포상"></div>' +
       '<div class="btn-row">' + ["연간 개직 부여", "특별 포상", "관리자 조정"].map(t =>
         '<button class="btn xs" data-gr="' + t + '">' + t + "</button>").join("") + "</div>",
     okText: "적용",
     onOk: async () => {
-      const d = Number($("#gjV").textContent), r = $("#gjR").value.trim();
+      const d = Number($("#gjV").textContent);
+      const r = $("#gjR").value.trim() || (d > 0 ? "관리자 지급" : "관리자 차감");
       if (!d) { toast("증감 값을 지정해주세요", "err"); return false; }
-      if (!r) { toast("사유를 입력해주세요", "err"); return false; }
       if (Number(u.gaejik || 0) + d < 0) { toast("잔여가 0 미만이 될 수 없습니다", "err"); return false; }
       await changeGaejik(uid, d, r);
       toast("개직 " + (d > 0 ? "+" : "") + d + "개 반영됨", "ok");
@@ -2317,16 +2437,24 @@ function adminSettings() {
     '<div class="hint">비워두면 각자 가입일부터 집계합니다. 도입일 지정을 권장합니다.</div></div></div>' +
 
     '<div class="card"><div class="card-h"><h3>📸 출근 · 지각</h3></div>' +
-    tim("stWork", "출근 기준 시각", S.workStart, "출근 사진 업로드 시각이 이 시각을 넘으면 지각") +
-    num("stPer", "1분당 벌금", S.latePerMin, "", 500) +
-    num("stMax", "지각 상한", S.lateMax, "", 1000) +
+    tim("stOpen", "출근 등록 시작 시각", S.checkinOpen || "05:00", "이 시각 이전에는 출근 사진을 올릴 수 없습니다") +
     tim("stAbsBy", "미출근 판정 시각", S.absentBy, "이 시각까지 사진이 없으면 미출근 처리") +
-    num("stAbsF", "미출근 벌금", S.absentFine, "", 1000) + "</div>" +
+    num("stAbsF", "미출근 벌금", S.absentFine, "", 1000) +
+    '<div class="hint" style="margin-bottom:10px">유형별 기준 시각 · 1분당 금액 · 상한은 아래 표에서 조정합니다.</div>' +
+    '<div class="tw"><table style="min-width:400px"><thead><tr><th>유형</th><th>기준시각</th><th class="num">1분당</th><th class="num">상한</th></tr></thead><tbody>' +
+    Object.keys(TYPES).map(t => {
+      const r = typeRule(S, t);
+      return "<tr><td>" + TYPES[t].icon + " <b>" + t + "</b></td>" +
+        "<td><input class='inp' type='time' style='padding:5px 6px;font-size:12px;width:104px' data-ts='" + t + "' value='" + r.start + "'" + (r.late ? "" : " disabled") + "></td>" +
+        "<td class='num'><input class='inp' type='number' step='500' style='padding:5px 6px;font-size:12px;width:88px;text-align:right' data-tp='" + t + "' value='" + r.perMin + "'" + (r.late ? "" : " disabled") + "></td>" +
+        "<td class='num'><input class='inp' type='number' step='10000' style='padding:5px 6px;font-size:12px;width:92px;text-align:right' data-tm='" + t + "' value='" + r.max + "'" + (r.late ? "" : " disabled") + "></td></tr>";
+    }).join("") + "</tbody></table></div></div>" +
 
     '<div class="card"><div class="card-h"><h3>🖼 워킹사진</h3></div>' +
     num("stPhotoN", "하루 최소 장수", S.photoMin) +
     num("stPhotoF", "미달 시 벌금", S.photoFine, "", 1000) +
-    tim("stPhotoFrom", "인정 시작 시각", S.photoFrom) + "</div>" +
+    tim("stPhotoFrom", "인정 시작 시각", S.photoFrom) +
+    tim("stPhotoTo", "인정 종료 시각", S.photoTo || "23:59", "이 시간대에 올린 사진만 집계됩니다") + "</div>" +
 
     '<div class="card"><div class="card-h"><h3>📋 일마감</h3></div>' +
     tim("stClFrom", "인정 시작", S.closingFrom, "이 시각 이후 저장부터 인정") +
@@ -2390,11 +2518,15 @@ function bindAdmin() {
   if (ss) ss.onclick = async () => {
     const tr = {};
     $$("[data-tr]").forEach(c => { const [t, k] = c.dataset.tr.split("|"); tr[t] = tr[t] || {}; tr[t][k] = c.checked; });
+    $$("[data-ts]").forEach(c => { const t = c.dataset.ts; tr[t] = tr[t] || {}; tr[t].start = c.value || "08:00"; });
+    $$("[data-tp]").forEach(c => { const t = c.dataset.tp; tr[t] = tr[t] || {}; tr[t].perMin = +c.value || 0; });
+    $$("[data-tm]").forEach(c => { const t = c.dataset.tm; tr[t] = tr[t] || {}; tr[t].max = +c.value || 0; });
     await DB.set("settings", "global", {
       account: $("#stAcct").value.trim(), startDate: $("#stStart").value || "",
-      workStart: $("#stWork").value, latePerMin: +$("#stPer").value || 0, lateMax: +$("#stMax").value || 0,
+      checkinOpen: $("#stOpen").value,
       absentBy: $("#stAbsBy").value, absentFine: +$("#stAbsF").value || 0,
-      photoMin: +$("#stPhotoN").value || 0, photoFine: +$("#stPhotoF").value || 0, photoFrom: $("#stPhotoFrom").value,
+      photoMin: +$("#stPhotoN").value || 0, photoFine: +$("#stPhotoF").value || 0,
+      photoFrom: $("#stPhotoFrom").value, photoTo: $("#stPhotoTo").value,
       closingFrom: $("#stClFrom").value, closingTo: $("#stClTo").value,
       closingFine: +$("#stCloseF").value || 0, closingForAll: $("#stCloseAll").checked,
       reportDeadline: $("#stRepDl").value, gaejikDeadline: $("#stGjDl").value,
@@ -2665,11 +2797,16 @@ async function seedDemo() {
       const dt = parseD(ds); dt.setHours(t[0], t[1], 0, 0);
       const cl = parseD(ds); cl.setHours(21, 30, 0, 0);
       await DB.set("daily", dayId(ids[i], ds), {
-        uid: ids[i], date: ds, type, reason: type === "직출" ? "OO센터 상담" : "",
+        uid: ids[i], date: ds, type,
         reportAt: reportDeadlineTs(ds, type, DEFAULT_SETTINGS) - 3600000 * (r < 8 ? 2 : -1),
         gaejikUsed: type === "개직",
         checkinAt: type === "개직" ? null : dt.getTime(),
-        photos: type === "개직" ? [] : new Array(r % 4 === 3 ? 2 : 3).fill("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='120' height='120' fill='%23dde3ec'/><text x='60' y='66' font-size='38' text-anchor='middle' fill='%238b94a6'>📷</text></svg>"),
+        hospital: type === "병원근무" ? "OO정형외과 3층" : "",
+        reason: type === "직출" ? "OO고객 10시 방문상담 · 어제 21시 통화 완료" : "",
+        photos: type === "개직" ? [] : new Array(r % 4 === 3 ? 2 : 3).fill(0).map((_, k) => {
+          const pt = parseD(ds); pt.setHours(11 + k * 3, 20, 0, 0);
+          return { u: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='120' height='120' fill='%23dde3ec'/><text x='60' y='66' font-size='38' text-anchor='middle' fill='%238b94a6'>IMG</text></svg>", at: pt.getTime() };
+        }),
         closingItems: [{ t: "내일 상담 리스트 정리", done: true }, { t: "일일 실적 입력", done: r % 3 !== 0 }],
         closingSavedAt: r % 5 !== 4 ? cl.getTime() : 0,
         updatedAt: Date.now() - 86400000 * d
