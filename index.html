@@ -638,7 +638,7 @@ const TABLES = {
   glog:     { table: "glog",     json: true },
   holidays: { table: "holidays", json: true },
   settings: { table: "settings", json: true },
-  teams:    { table: "teams",    json: true }
+  teams:    { table: "teams",    json: true, plain: true }
 };
 
 function rowToUser(r) {
@@ -727,7 +727,8 @@ DB.loadAll = async function () {
 };
 
 DB.subscribeRT = function () {
-  const ch = this.sb.channel("teamfine");
+  if (this._ch) { try { this.sb.removeChannel(this._ch); } catch (e) { } this._ch = null; }
+  const ch = this.sb.channel("teamfine_" + uid8());
   Object.keys(TABLES).forEach(col => {
     const T = TABLES[col];
     ch.on("postgres_changes", { event: "*", schema: "public", table: T.table }, payload => {
@@ -744,6 +745,7 @@ DB.subscribeRT = function () {
     });
   });
   ch.subscribe();
+  this._ch = ch;
 };
 
 /** users 는 패치 필드만 update, 없으면 insert (권한 필드 오염 방지) */
@@ -761,7 +763,9 @@ DB.set = async function (col, id, data) {
   let error = null;
   if (T.json) {
     const body = Object.assign({}, merged); delete body.id;
-    const row = { id, uid: body.uid || null, date: body.date || null, data: body };
+    const row = T.plain
+      ? { id, data: body }
+      : { id, uid: body.uid || null, date: body.date || null, data: body };
     ({ error } = await this.sb.from(T.table).upsert(row, { onConflict: "id" }));
   } else {
     const patch = userToRow(data);
@@ -2613,7 +2617,7 @@ function adminTeams() {
     h += '<div class="sec-t">팀 미배정 ' + noTeam.length + "명</div><div class='card pad0'>" +
       noTeam.map(u => '<div class="row"><div class="avatar">' + esc(initial(u.name)) + "</div>" +
         '<div class="sp"><div class="nm">' + esc(u.name) + '</div><div class="ds">' + esc(u.email || "") + "</div></div>" +
-        '<button class="btn xs" data-tmassign="' + u.uid + '">팀 배정</button></div>').join("") + "</div>";
+        '<button class="btn xs pri" data-tmassign="' + u.uid + '">팀 배정</button></div>').join("") + "</div>";
   }
   return h;
 }
@@ -2632,7 +2636,16 @@ function openTeamModal(id) {
         '<div class="hint">선택한 사람의 등급이 <b>SM</b>으로 바뀝니다. 기존 SM은 AP로 내려갑니다.</div></div>' +
         '<div class="fld"><label style="display:flex;align-items:center;gap:10px">팀 비활성화' +
         '<label class="sw"><input type="checkbox" id="tmOff"' + (t.disabled ? " checked" : "") + '><span class="tr"></span></label></label>' +
-        '<div class="hint">비활성화하면 가입 화면 목록에서 사라집니다. 기존 데이터는 그대로 유지됩니다.</div></div>' : ""),
+        '<div class="hint">비활성화하면 가입 화면 목록에서 사라집니다. 기존 데이터는 그대로 유지됩니다.</div></div>' +
+        '<div class="fld"><label>팀원 ' + members.length + '명</label>' +
+        '<div style="max-height:230px;overflow-y:auto;border:1px solid var(--line);border-radius:var(--rs)">' +
+        (members.length ? members.map(u =>
+          '<div class="row" style="padding:8px 10px"><div class="avatar" style="width:28px;height:28px;font-size:12px">' +
+          esc(initial(u.name)) + '</div><div class="sp"><div class="nm" style="font-size:13.5px">' + esc(u.name) +
+          ' <span class="bdg ' + gradeInfo(u).color + '" style="font-size:10px">' + esc(gradeOf(u)) + '</span></div></div>' +
+          "<button class='btn xs' data-tmmove='" + u.uid + "'>팀 이동</button></div>").join("")
+          : '<div class="hint" style="padding:10px">아직 팀원이 없습니다</div>') + '</div>' +
+        '<div class="hint">잘못 들어온 팀원은 <b>팀 이동</b>으로 다른 팀에 넣을 수 있습니다.</div></div>' : ""),
     okText: t ? "저장" : "만들기",
     onOk: async () => {
       const nm = $("#tmName").value.trim();
@@ -2649,23 +2662,31 @@ function openTeamModal(id) {
         }
       }
       toast(t ? "팀 정보 저장됨" : "팀이 생성되었습니다", "ok");
+    },
+    after: () => {
+      $$("[data-tmmove]").forEach(b => b.onclick = () => {
+        const mid = b.dataset.tmmove; closeModal(); openAssignTeam(mid);
+      });
     }
   });
 }
 
 function openAssignTeam(uid) {
   const u = DB.get("users", uid); if (!u) return;
+  if (!Auth.isMaster()) { toast("팀 이동은 마스터만 할 수 있습니다", "err"); return; }
   modal({
-    title: esc(u.name) + " 팀 배정",
-    body: '<div class="fld"><label>소속 팀</label><select class="inp" id="asTeam">' +
-      TEAMS().map(t => "<option value='" + esc(t.id) + "'" + (u.teamId === t.id ? " selected" : "") + ">" + esc(t.name) + "</option>").join("") +
-      "</select></div>",
-    okText: "배정",
+    title: esc(u.name) + " 팀 이동",
+    body: '<div class="banner i" style="font-size:12.5px">현재 소속 · <b>' + esc(teamName(u.teamId)) + "</b></div>" +
+      '<div class="fld"><label>옮길 팀</label><select class="inp" id="asTeam">' +
+      "<option value=''>— 미배정 —</option>" +
+      TEAMS().map(t => "<option value='" + esc(t.id) + "'" + ((u.teamId || "") === t.id ? " selected" : "") + ">" + esc(t.name) + "</option>").join("") +
+      "</select><div class='hint'>출근·벌금·개직 기록은 그대로 따라갑니다. TL 담당 인원 지정은 초기화됩니다.</div></div>",
+    okText: "이동",
     onOk: async () => {
       const v = $("#asTeam").value;
-      if (!v) { toast("팀을 선택해주세요", "err"); return false; }
-      await DB.set("users", uid, { teamId: v });
-      toast("배정 완료", "ok");
+      if ((v || "") === (u.teamId || "")) { toast("이미 그 팀입니다", "err"); return false; }
+      await DB.set("users", uid, { teamId: v || null, tlMembers: [] });
+      toast(esc(u.name) + " → " + teamName(v) + " 이동 완료", "ok");
     }
   });
 }
@@ -2924,6 +2945,13 @@ function openMemberModal(uid) {
       (Auth.isMaster() ? GRADE_ORDER : SM_ASSIGNABLE)
         .map(g => "<option value='" + g + "'" + (gradeOf(u) === g ? " selected" : "") + ">" + g + " — " + GRADES[g].desc + "</option>").join("") +
       "</select></div>" +
+      (Auth.isMaster()
+        ? '<div class="fld"><label>소속 팀</label><select class="inp" id="meTeam">' +
+          "<option value=''>— 미배정 —</option>" +
+          TEAMS().map(t => "<option value='" + esc(t.id) + "'" + ((u.teamId || "") === t.id ? " selected" : "") + ">" +
+            esc(t.name) + "</option>").join("") + "</select>" +
+          '<div class="hint">팀을 바꾸면 이 회원의 기록도 그 팀 화면으로 함께 옮겨집니다. (마스터만 변경 가능)</div></div>'
+        : "") +
       '<div class="fld" id="tlWrap" style="' + (gradeInfo(u).tl && !GRADES[gradeOf(u)].admin ? "" : "display:none") + '">' +
       '<label>담당 팀원 (TL이 상세를 볼 수 있는 인원)</label>' +
       '<div style="max-height:180px;overflow-y:auto;border:1px solid var(--line);border-radius:var(--rs);padding:8px">' +
@@ -2946,6 +2974,11 @@ function openMemberModal(uid) {
         grade, tlMembers: grade === "TL" ? tl : (u.tlMembers || []),
         hidden: $("#meHidden").checked
       };
+      const tSel = $("#meTeam");
+      if (tSel && Auth.isMaster() && tSel.value !== (u.teamId || "")) {
+        patch.teamId = tSel.value || null;
+        patch.tlMembers = [];
+      }
       // 벌금 면제 등급(후보자/SM)에서 벌금 적용 등급(AP/TL)으로 새로 승급하는 경우에만
       // 오늘부터 벌금 집계를 시작하도록 기록한다 (과거 기간 소급 방지).
       if (!gradeInfo(u).fine && GRADES[grade] && GRADES[grade].fine) {
