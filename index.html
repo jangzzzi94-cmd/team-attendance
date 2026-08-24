@@ -45,6 +45,18 @@ a{color:var(--pri);text-decoration:none}
 }
 .topbar .logo{font-weight:800;font-size:18px;letter-spacing:-.02em;display:flex;align-items:center;gap:8px;color:#fff}
 .topbar .logo span{color:#8fb4e3}
+.topbar .logo{white-space:nowrap;flex:0 0 auto}
+#teamSel{flex:0 1 auto;min-width:0;text-overflow:ellipsis}
+.topbar .chip-user{flex:0 0 auto;white-space:nowrap}
+@media(max-width:520px){
+  .topbar{gap:6px;padding:8px 10px}
+  .topbar .logo{font-size:14px}
+  .topbar .logo span{display:none}
+  #teamSel{max-width:104px !important;font-size:11.5px !important;padding:4px 6px !important;margin-left:4px !important}
+  .topbar .chip-user{font-size:12px;padding:4px 9px 4px 4px;gap:5px}
+  .topbar .chip-user .avatar{width:22px;height:22px;font-size:10.5px}
+}
+@media(max-width:380px){ .topbar .logo{display:none} #teamSel{max-width:130px !important} }
 .topbar .sp{flex:1}
 .chip-user{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line2);
   border-radius:999px;padding:5px 12px 5px 5px;font-size:13px;font-weight:700;box-shadow:var(--sh-s)}
@@ -337,9 +349,12 @@ const GRADES = {
   "후보자": { fine: false, admin: false, tl: false, color: "n", desc: "시스템 사용 · 벌금 면제" },
   "AP":    { fine: true,  admin: false, tl: false, color: "b", desc: "벌금 적용" },
   "TL":    { fine: true,  admin: false, tl: true,  color: "p", desc: "벌금 적용 · 담당 인원 관리" },
-  "SM":    { fine: false, admin: true,  tl: true,  color: "g", desc: "관리자 전권 · 벌금 미적용" }
+  "SM":    { fine: false, admin: true,  tl: true,  master: false, color: "g", desc: "팀 관리자 · 본인 팀 전권" },
+  "마스터": { fine: false, admin: true,  tl: true,  master: true,  color: "r", desc: "전체 총괄 · 모든 팀 열람" }
 };
-const GRADE_ORDER = ["후보자", "AP", "TL", "SM"];
+const GRADE_ORDER = ["후보자", "AP", "TL", "SM", "마스터"];
+/** SM 이 팀원에게 줄 수 있는 등급 (SM·마스터는 마스터만 지정) */
+const SM_ASSIGNABLE = ["후보자", "AP", "TL"];
 function gradeOf(u) { return (u && GRADES[u.grade]) ? u.grade : "후보자"; }
 function gradeInfo(u) { return GRADES[gradeOf(u)]; }
 
@@ -622,7 +637,8 @@ const TABLES = {
   fines:    { table: "fines",    json: true },
   glog:     { table: "glog",     json: true },
   holidays: { table: "holidays", json: true },
-  settings: { table: "settings", json: true }
+  settings: { table: "settings", json: true },
+  teams:    { table: "teams",    json: true }
 };
 
 function rowToUser(r) {
@@ -634,6 +650,8 @@ function rowToUser(r) {
     checklist: Array.isArray(r.checklist) ? r.checklist : [],
     tlMembers: Array.isArray(r.tl_members) ? r.tl_members : [],
     lastGrant: r.last_grant || "",
+    feeStart: r.fee_start || "",
+    teamId: r.team_id || "",
     joinedAt: r.joined_at ? new Date(r.joined_at).getTime() : 0
   };
 }
@@ -652,6 +670,7 @@ function userToRow(d) {
   if ("tlMembers" in d) o.tl_members = d.tlMembers || [];
   if ("lastGrant" in d) o.last_grant = d.lastGrant || null;
   if ("feeStart" in d) o.fee_start = d.feeStart || null;
+  if ("teamId" in d) o.team_id = d.teamId || null;
   if ("joinedAt" in d) o.joined_at = new Date(d.joinedAt).toISOString();
   return o;
 }
@@ -659,7 +678,7 @@ function rowToDoc(r) { return Object.assign({}, r.data || {}, { id: r.id }); }
 
 const DB = {
   mode: "demo", ready: false, sb: null,
-  cache: { users: {}, daily: {}, fines: {}, glog: {}, holidays: {}, settings: {} },
+  cache: { users: {}, daily: {}, fines: {}, glog: {}, holidays: {}, settings: {}, teams: {} },
   subs: [],
   onChange(fn) { this.subs.push(fn); },
   emit() { this.subs.forEach(f => { try { f(); } catch (e) { console.error(e); } }); }
@@ -802,15 +821,15 @@ function withTimeout(p, ms, label) {
 
 const Auth = {
   user: null, profile: null,
-  async signup(email, pw, name, birth) {
+  async signup(email, pw, name, birth, teamId) {
     if (DB.mode === "sb") {
       const { data, error } = await withTimeout(DB.sb.auth.signUp({ email, password: pw }), 15000, "회원가입");
       if (error) throw new Error(error.message);
-      pendingProfile = { name, birth };
+      pendingProfile = { name, birth, teamId };
       if (!data.session) throw new Error("__CONFIRM_EMAIL__");
       const u = data.user;
       Auth.user = { uid: u.id, email: u.email };
-      await DB.set("users", u.id, { uid: u.id, email: u.email, name, birth, joinedAt: Date.now() });
+      await DB.set("users", u.id, { uid: u.id, email: u.email, name, birth, teamId: teamId || null, joinedAt: Date.now() });
       await DB.loadAll();
       pendingProfile = null;
       return Auth.user;
@@ -818,7 +837,7 @@ const Auth = {
     const id = "u_" + uid8();
     const first = DB.all("users").length === 0;
     await DB.set("users", id, {
-      uid: id, email, name, birth, pw, grade: first ? "SM" : "후보자",
+      uid: id, email, name, birth, pw, teamId: teamId || firstTeamId(), grade: first ? "마스터" : "후보자",
       approved: first, gaejik: 0, joinedAt: Date.now(), bdayYear: 0, checklist: [], tlMembers: []
     });
     this.user = { uid: id, email };
@@ -845,6 +864,7 @@ const Auth = {
     this.user = null; this.profile = null; App.view = "home"; render();
   },
   isAdmin() { return !!(this.profile && gradeInfo(this.profile).admin); },
+  isMaster() { return !!(this.profile && gradeInfo(this.profile).master); },
   isTL() { return !!(this.profile && gradeInfo(this.profile).tl); },
   /** TL/SM 이 해당 팀원의 상세(일마감·직출사유)를 볼 수 있는가 */
   canSee(uid) {
@@ -857,10 +877,53 @@ const Auth = {
 };
 
 /* ============================ 파생 데이터 ============================ */
-function SET() { return Object.assign({}, DEFAULT_SETTINGS, DB.get("settings", "global") || {}); }
-function HOLIDAYS() { return DB.cache.holidays; }
-function USERS() { return DB.all("users").sort((a, b) => (a.name || "").localeCompare(b.name || "", "ko")); }
+/* ============================ 팀 스코프 ============================ */
+/** 지금 화면이 다루는 팀 id. 마스터는 팀을 바꿔가며 보고, 그 외는 본인 팀 고정. */
+function curTeam() {
+  if (Auth.isMaster()) return App.teamView || (Auth.profile && Auth.profile.teamId) || firstTeamId();
+  return (Auth.profile && Auth.profile.teamId) || "";
+}
+function isAllTeams() { return Auth.isMaster() && App.teamView === "__all__"; }
+function TEAMS() {
+  return DB.all("teams").filter(t => !t.disabled)
+    .sort((a, b) => (a.name || "").localeCompare(b.name || "", "ko"));
+}
+function firstTeamId() { const t = TEAMS()[0]; return t ? t.id : ""; }
+function teamName(id) { const t = DB.get("teams", id); return (t && t.name) || (id ? "이름없는 팀" : "미배정"); }
+/** 공휴일 문서 id = "{팀id}__{날짜}" */
+function holidayId(date, team) { return (team || curTeam()) + "__" + date; }
+
+/** 팀 설정 = 기본값 ← 전역(마스터 기본) ← 팀별 설정 */
+function SET(team) {
+  const t = team === undefined ? curTeam() : team;
+  return Object.assign({}, DEFAULT_SETTINGS,
+    DB.get("settings", "global") || {},
+    (t && DB.get("settings", t)) || {});
+}
+/** 현재 팀의 공휴일만 { 날짜: {...} } */
+function HOLIDAYS(team) {
+  const t = team === undefined ? curTeam() : team;
+  const out = {};
+  DB.all("holidays").forEach(h => {
+    const id = h.id || "", p = id.indexOf("__");
+    if (p < 0 || id.slice(0, p) !== t) return;
+    out[id.slice(p + 2)] = h;
+  });
+  return out;
+}
+function USERS() {
+  const t = curTeam();
+  return DB.all("users")
+    .filter(u => isAllTeams() ? true : (u.teamId || "") === t)
+    .sort((a, b) => (a.name || "").localeCompare(b.name || "", "ko"));
+}
 function ACTIVE_USERS() { return USERS().filter(u => u.approved && !u.disabled); }
+/** 승인 대기자 — 마스터는 전체, SM은 본인 팀만 */
+function PENDING_USERS() {
+  return DB.all("users").filter(u => !u.approved && !u.disabled)
+    .filter(u => Auth.isMaster() || (u.teamId || "") === curTeam())
+    .sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
+}
 
 function collectFines(opt) {
   opt = opt || {};
@@ -944,7 +1007,8 @@ const App = {
   rankTab: "fine",
   checkDate: today(),
   booting: true,
-  payShown: false
+  payShown: false,
+  teamView: ""        // 마스터가 보고 있는 팀 id ("__all__" = 전체)
 };
 
 const ICONS = {
@@ -1018,6 +1082,13 @@ function render() {
     '<div id="app">' +
     '<div class="topbar">' +
     '<div class="logo">팀 근태 <span>· 벌금</span></div>' +
+    (Auth.isMaster()
+      ? "<select id='teamSel' style='margin-left:10px;background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:9px;padding:5px 9px;font-size:12.5px;font-weight:700;max-width:150px'>" +
+        "<option value='__all__'" + (App.teamView === "__all__" ? " selected" : "") + ">전체 팀</option>" +
+        TEAMS().map(t => "<option value='" + esc(t.id) + "'" + (curTeam() === t.id && App.teamView !== "__all__" ? " selected" : "") + ">" + esc(t.name) + "</option>").join("") +
+        "</select>"
+      : (Auth.profile && Auth.profile.teamId
+        ? '<span class="bdg n" style="margin-left:8px;background:rgba(255,255,255,.16);color:#fff">' + esc(teamName(Auth.profile.teamId)) + "</span>" : "")) +
     '<div class="sp"></div>' +
     '<button class="chip-user" data-act="me">' +
     '<span class="avatar">' + esc(initial(p.name)) + "</span>" + esc(p.name) +
@@ -1094,7 +1165,12 @@ function authScreen() {
       '<div class="fld"><label>비밀번호</label><input class="inp" id="aPw" type="password" placeholder="••••••••" autocomplete="current-password"></div>' +
       '<button class="btn pri full" id="aGo" style="margin-top:6px">로그인</button>' +
       '<div style="text-align:center;margin-top:11px"><a href="#" id="aReset" style="font-size:12px;color:var(--tx3)">비밀번호를 잊으셨나요?</a></div>'
-      : '<div class="fld"><label>이름</label><input class="inp" id="sName" placeholder="홍길동"></div>' +
+      : (TEAMS().length
+        ? '<div class="fld"><label>소속 팀</label><select class="inp" id="sTeam">' +
+          TEAMS().map(t => "<option value='" + esc(t.id) + "'>" + esc(t.name || "이름없는 팀") + "</option>").join("") +
+          "</select><div class='hint'>본인이 속할 SM팀을 선택하세요. 해당 팀 관리자가 승인합니다.</div></div>"
+        : '<div class="banner w">아직 등록된 팀이 없습니다. 지금 가입하면 <b>첫 가입자로 마스터</b>가 되며, 이후 팀을 직접 만들 수 있습니다.</div>') +
+      '<div class="fld"><label>이름</label><input class="inp" id="sName" placeholder="홍길동"></div>' +
       '<div class="fld"><label>생년월일</label><input class="inp" id="sBirth" type="date">' +
       '<div class="hint">생일이 있는 달 1일에 개직이 자동으로 추가됩니다.</div></div>' +
       '<div class="fld"><label>이메일</label><input class="inp" id="sEmail" type="email" placeholder="name@example.com"></div>' +
@@ -1129,8 +1205,10 @@ function bindAuth() {
   if (s) s.onclick = async () => {
     const name = $("#sName").value.trim(), birth = $("#sBirth").value,
       em = $("#sEmail").value.trim(), pw = $("#sPw").value;
+    const teamId = $("#sTeam") ? $("#sTeam").value : "";
     if (!name || !birth || !em || pw.length < 6) return toast("모든 항목을 입력해주세요 (비밀번호 6자 이상)", "err");
-    try { s.disabled = true; await Auth.signup(em, pw, name, birth); toast("가입 신청 완료", "ok"); }
+    if (TEAMS().length && !teamId) return toast("소속 팀을 선택해주세요", "err");
+    try { s.disabled = true; await Auth.signup(em, pw, name, birth, teamId); toast("가입 신청 완료", "ok"); }
     catch (e) {
       s.disabled = false;
       if (String(e.message) === "__CONFIRM_EMAIL__") {
@@ -1208,6 +1286,8 @@ function openImage(src, title) {
 function bindGlobal() {
   $$("[data-nav]").forEach(b => b.onclick = () => go(b.dataset.nav));
   const me = $('[data-act="me"]'); if (me) me.onclick = openMyModal;
+  const ts = $("#teamSel");
+  if (ts) ts.onchange = () => { App.teamView = ts.value; render(); };
   $$("[data-open-fine]").forEach(b => b.onclick = () => openFineModal(b.dataset.openFine));
   $$("[data-open-day]").forEach(b => b.onclick = () => openDayModal(b.dataset.openDay, b.dataset.uid));
   $$("[data-img]").forEach(b => b.onclick = () => openImage(b.dataset.img, b.dataset.imgt || ""));
@@ -1538,7 +1618,7 @@ function bindCheckin() {
   const hol = $("#ckHol");
   if (hol) hol.onclick = async () => {
     const d = App.checkDate, H = HOLIDAYS(), cur = isWorkday(d, H), ex = H[d] || {};
-    await DB.set("holidays", d, { date: d, name: ex.name || (dow(d) === 0 || dow(d) === 6 ? "주말 근무" : "공휴일"), work: !cur });
+    await DB.set("holidays", holidayId(d), { date: d, name: ex.name || (dow(d) === 0 || dow(d) === 6 ? "주말 근무" : "공휴일"), work: !cur });
     toast(!cur ? "근무일로 지정됨" : "휴무일로 지정됨", "ok");
   };
 
@@ -2486,9 +2566,13 @@ function openGaejikModal(uid) {
 function viewAdmin() {
   if (!Auth.isAdmin()) return '<div class="card">권한이 없습니다.</div>';
   const tab = App.adminTab;
+  const tabs = [["member", "팀원"], ["paylog", "납부로그"], ["holiday", "공휴일"], ["settings", "규칙"]];
+  if (Auth.isMaster()) tabs.push(["teams", "팀 관리"]);
   let h = '<div class="seg sm" style="margin-bottom:14px">' +
-    [["member", "팀원"], ["paylog", "납부로그"], ["holiday", "공휴일"], ["settings", "규칙"]]
-      .map(([k, t]) => '<button data-atab="' + k + '" class="' + (tab === k ? "on" : "") + '">' + t + "</button>").join("") + "</div>";
+    tabs.map(([k, t]) => '<button data-atab="' + k + '" class="' + (tab === k ? "on" : "") + '">' + t + "</button>").join("") + "</div>";
+  if (Auth.isMaster() && !TEAMS().length && tab !== "teams")
+    h += '<div class="banner w">아직 팀이 없습니다. <b>팀 관리</b> 탭에서 팀을 먼저 만들어주세요.</div>';
+  if (tab === "teams") return h + adminTeams();
   if (tab === "member") h += adminMembers();
   if (tab === "paylog") h += adminPayLog();
   if (tab === "holiday") h += adminHolidays();
@@ -2496,9 +2580,99 @@ function viewAdmin() {
   return h;
 }
 
+/* ============================ 팀 관리 (마스터 전용) ============================ */
+function adminTeams() {
+  if (!Auth.isMaster()) return '<div class="card">마스터만 볼 수 있습니다.</div>';
+  const all = DB.all("teams").sort((a, b) => (a.name || "").localeCompare(b.name || "", "ko"));
+  const users = DB.all("users");
+  let h = '<div class="banner i">팀을 만들면 회원가입 화면의 <b>소속 팀</b> 목록에 나타납니다. ' +
+    '팀장(SM)을 지정하면 그 사람이 자기 팀의 가입 승인·벌금·규칙을 직접 관리합니다.</div>' +
+    '<div class="btn-row" style="margin-bottom:12px"><button class="btn pri sm" id="tmAdd">+ 팀 만들기</button></div>';
+
+  h += '<div class="card pad0"><div class="tw"><table style="min-width:640px">' +
+    "<thead><tr><th>팀</th><th>팀장(SM)</th><th class='num'>인원</th><th class='num'>대기</th><th class='num'>이번달 벌금</th><th></th></tr></thead><tbody>" +
+    (all.length ? all.map(t => {
+      const mem = users.filter(u => (u.teamId || "") === t.id);
+      const act = mem.filter(u => u.approved && !u.disabled);
+      const pend = mem.filter(u => !u.approved && !u.disabled);
+      const sm = act.filter(u => gradeOf(u) === "SM");
+      const sum = act.reduce((acc, u) => acc + sumFines(
+        collectFines({ uid: u.uid }).filter(f => f.date.startsWith(monthOf(today())) && !f.pending)), 0);
+      return "<tr" + (t.disabled ? " style='opacity:.5'" : "") + "><td><b>" + esc(t.name || "이름없는 팀") + "</b>" +
+        (t.disabled ? " <span class='bdg n'>비활성</span>" : "") + "</td>" +
+        "<td>" + (sm.length ? sm.map(u => esc(u.name)).join(", ") : "<span style='color:var(--dan)'>미지정</span>") + "</td>" +
+        "<td class='num'>" + act.length + "</td>" +
+        "<td class='num'>" + (pend.length ? "<b style='color:var(--pur)'>" + pend.length + "</b>" : "0") + "</td>" +
+        "<td class='num mono'>" + won(sum) + "</td>" +
+        "<td><button class='btn xs' data-tmedit='" + esc(t.id) + "'>관리</button></td></tr>";
+    }).join("") : "<tr><td colspan='6'><div class='empty'>아직 팀이 없습니다. 위에서 만들어주세요.</div></td></tr>") +
+    "</tbody></table></div></div>";
+
+  const noTeam = users.filter(u => !u.teamId);
+  if (noTeam.length) {
+    h += '<div class="sec-t">팀 미배정 ' + noTeam.length + "명</div><div class='card pad0'>" +
+      noTeam.map(u => '<div class="row"><div class="avatar">' + esc(initial(u.name)) + "</div>" +
+        '<div class="sp"><div class="nm">' + esc(u.name) + '</div><div class="ds">' + esc(u.email || "") + "</div></div>" +
+        '<button class="btn xs" data-tmassign="' + u.uid + '">팀 배정</button></div>').join("") + "</div>";
+  }
+  return h;
+}
+
+function openTeamModal(id) {
+  const t = id ? DB.get("teams", id) : null;
+  const members = id ? DB.all("users").filter(u => (u.teamId || "") === id && u.approved && !u.disabled) : [];
+  modal({
+    title: t ? "팀 관리" : "팀 만들기",
+    body:
+      '<div class="fld"><label>팀 이름</label><input class="inp" id="tmName" placeholder="예: 장진수SM팀" value="' + esc((t && t.name) || "") + '"></div>' +
+      (t ? '<div class="fld"><label>팀장(SM) 지정</label><select class="inp" id="tmSm">' +
+        "<option value=''>— 지정 안 함 —</option>" +
+        members.map(u => "<option value='" + u.uid + "'" + (gradeOf(u) === "SM" ? " selected" : "") + ">" +
+          esc(u.name) + " (" + gradeOf(u) + ")</option>").join("") + "</select>" +
+        '<div class="hint">선택한 사람의 등급이 <b>SM</b>으로 바뀝니다. 기존 SM은 AP로 내려갑니다.</div></div>' +
+        '<div class="fld"><label style="display:flex;align-items:center;gap:10px">팀 비활성화' +
+        '<label class="sw"><input type="checkbox" id="tmOff"' + (t.disabled ? " checked" : "") + '><span class="tr"></span></label></label>' +
+        '<div class="hint">비활성화하면 가입 화면 목록에서 사라집니다. 기존 데이터는 그대로 유지됩니다.</div></div>' : ""),
+    okText: t ? "저장" : "만들기",
+    onOk: async () => {
+      const nm = $("#tmName").value.trim();
+      if (!nm) { toast("팀 이름을 입력해주세요", "err"); return false; }
+      const tid = id || ("team_" + uid8());
+      await DB.set("teams", tid, { name: nm, disabled: $("#tmOff") ? $("#tmOff").checked : false,
+        createdAt: (t && t.createdAt) || Date.now() });
+      const smSel = $("#tmSm");
+      if (smSel) {
+        const pick = smSel.value;
+        for (const u of members) {
+          if (u.uid === pick && gradeOf(u) !== "SM") await DB.set("users", u.uid, { grade: "SM" });
+          else if (u.uid !== pick && gradeOf(u) === "SM") await DB.set("users", u.uid, { grade: "AP" });
+        }
+      }
+      toast(t ? "팀 정보 저장됨" : "팀이 생성되었습니다", "ok");
+    }
+  });
+}
+
+function openAssignTeam(uid) {
+  const u = DB.get("users", uid); if (!u) return;
+  modal({
+    title: esc(u.name) + " 팀 배정",
+    body: '<div class="fld"><label>소속 팀</label><select class="inp" id="asTeam">' +
+      TEAMS().map(t => "<option value='" + esc(t.id) + "'" + (u.teamId === t.id ? " selected" : "") + ">" + esc(t.name) + "</option>").join("") +
+      "</select></div>",
+    okText: "배정",
+    onOk: async () => {
+      const v = $("#asTeam").value;
+      if (!v) { toast("팀을 선택해주세요", "err"); return false; }
+      await DB.set("users", uid, { teamId: v });
+      toast("배정 완료", "ok");
+    }
+  });
+}
+
 function adminMembers() {
   const S = SET();
-  const pend = USERS().filter(u => !u.approved && !u.disabled);
+  const pend = PENDING_USERS();
   const act = ACTIVE_USERS();
   const off = USERS().filter(u => u.disabled);
   let h = "";
@@ -2506,7 +2680,8 @@ function adminMembers() {
     h += '<div class="sec-t">가입 승인 대기 ' + pend.length + "명</div><div class='card pad0'>" +
       pend.map(u => '<div class="row"><div class="avatar">' + esc(initial(u.name)) + "</div>" +
         '<div class="sp"><div class="nm">' + esc(u.name) + "</div>" +
-        '<div class="ds">생일 ' + esc(u.birth || "-") + "</div></div>" +
+        '<div class="ds">생일 ' + esc(u.birth || "-") +
+        (Auth.isMaster() ? " · <b>" + esc(teamName(u.teamId)) + "</b>" : "") + "</div></div>" +
         '<button class="btn xs ok" data-appr="' + u.uid + '">승인</button>' +
         '<button class="btn xs dan" data-rej="' + u.uid + '">거절</button></div>').join("") + "</div>";
   }
@@ -2671,6 +2846,9 @@ function adminSettings() {
 
 function bindAdmin() {
   $$("[data-atab]").forEach(b => b.onclick = () => { App.adminTab = b.dataset.atab; render(); });
+  const tmA = $("#tmAdd"); if (tmA) tmA.onclick = () => openTeamModal(null);
+  $$("[data-tmedit]").forEach(b => b.onclick = () => openTeamModal(b.dataset.tmedit));
+  $$("[data-tmassign]").forEach(b => b.onclick = () => openAssignTeam(b.dataset.tmassign));
   $$("[data-appr]").forEach(b => b.onclick = async () => {
     try { await DB.set("users", b.dataset.appr, { approved: true }); toast("승인 완료 · 등급은 후보자입니다 (팀원 → 관리에서 변경)", "ok"); }
     catch (e) { toast(cleanErr(e), "err"); }
@@ -2694,7 +2872,7 @@ function bindAdmin() {
   const ha = $("#hAdd"); if (ha) ha.onclick = () => openHolidayModal(null);
   $$("[data-hedit]").forEach(b => b.onclick = () => openHolidayModal(b.dataset.hedit));
   $$("[data-hdel]").forEach(b => b.onclick = () => confirmM("삭제하시겠습니까?", async () => {
-    await DB.del("holidays", b.dataset.hdel); toast("삭제됨");
+    await DB.del("holidays", holidayId(b.dataset.hdel)); toast("삭제됨");
   }));
   const hp = $("#hPreset"); if (hp) hp.onclick = presetHolidays;
 
@@ -2706,7 +2884,7 @@ function bindAdmin() {
     $$("[data-tp]").forEach(c => { const t = c.dataset.tp; tr[t] = tr[t] || {}; tr[t].perMin = +c.value || 0; });
     $$("[data-tm]").forEach(c => { const t = c.dataset.tm; tr[t] = tr[t] || {}; tr[t].max = +c.value || 0; });
     const workDays = $$("[data-wd]").filter(c => c.checked).map(c => +c.dataset.wd);
-    await DB.set("settings", "global", {
+    await DB.set("settings", curTeam() || "global", {
       workDays: workDays.length ? workDays : [1, 2, 3, 4, 5],
       account: $("#stAcct").value.trim(), startDate: $("#stStart").value || "",
       checkinOpen: $("#stOpen").value,
@@ -2743,7 +2921,8 @@ function openMemberModal(uid) {
       won(sumFines(fs, f => f.status !== "paid")) + "</div></div></div>" +
       '<div class="fld"><label>생년월일</label><input class="inp" type="date" id="meBirth" value="' + esc(u.birth || "") + '"></div>' +
       '<div class="fld"><label>등급</label><select class="inp" id="meGrade">' +
-      GRADE_ORDER.map(g => "<option value='" + g + "'" + (gradeOf(u) === g ? " selected" : "") + ">" + g + " — " + GRADES[g].desc + "</option>").join("") +
+      (Auth.isMaster() ? GRADE_ORDER : SM_ASSIGNABLE)
+        .map(g => "<option value='" + g + "'" + (gradeOf(u) === g ? " selected" : "") + ">" + g + " — " + GRADES[g].desc + "</option>").join("") +
       "</select></div>" +
       '<div class="fld" id="tlWrap" style="' + (gradeInfo(u).tl && !GRADES[gradeOf(u)].admin ? "" : "display:none") + '">' +
       '<label>담당 팀원 (TL이 상세를 볼 수 있는 인원)</label>' +
@@ -2801,7 +2980,7 @@ function openHolidayModal(date) {
     onOk: async () => {
       const d = date || $("#hD").value;
       if (!d) { toast("날짜를 선택해주세요", "err"); return false; }
-      await DB.set("holidays", d, { date: d, name: $("#hN").value.trim(), work: $("#hW").value === "on" });
+      await DB.set("holidays", holidayId(d), { date: d, name: $("#hN").value.trim(), work: $("#hW").value === "on" });
       toast("저장됨", "ok");
     }
   });
@@ -2818,11 +2997,11 @@ async function presetHolidays() {
   for (const y of [Y, Y + 1]) {
     for (const md in KR_HOLIDAYS) {
       const d = y + "-" + md;
-      if (!DB.get("holidays", d)) { await DB.set("holidays", d, { date: d, name: KR_HOLIDAYS[md], work: false }); n++; }
+      if (!DB.get("holidays", holidayId(d))) { await DB.set("holidays", holidayId(d), { date: d, name: KR_HOLIDAYS[md], work: false }); n++; }
     }
     for (const [md, nm] of (KR_LUNAR[y] || [])) {
       const d = y + "-" + md;
-      if (!DB.get("holidays", d)) { await DB.set("holidays", d, { date: d, name: nm, work: false }); n++; }
+      if (!DB.get("holidays", holidayId(d))) { await DB.set("holidays", holidayId(d), { date: d, name: nm, work: false }); n++; }
     }
   }
   toast(n + "개 공휴일이 등록되었습니다", "ok");
@@ -2936,6 +3115,10 @@ function completeProfileScreen() {
     '<div class="card">' +
     '<div class="fld"><label>이름</label><input class="inp" id="cpName" value="' + esc(pp.name || "") + '"></div>' +
     '<div class="fld"><label>생년월일</label><input class="inp" type="date" id="cpBirth" value="' + esc(pp.birth || "") + '"></div>' +
+    '<div class="fld"><label>소속 팀</label><select class="inp" id="cpTeam">' +
+    (TEAMS().length
+      ? TEAMS().map(t => "<option value='" + esc(t.id) + "'" + (pp.teamId === t.id ? " selected" : "") + ">" + esc(t.name || "이름없는 팀") + "</option>").join("")
+      : "<option value=''>등록된 팀이 없습니다</option>") + "</select></div>" +
     '<button class="btn pri full" id="cpGo">등록</button>' +
     '<button class="btn gho full sm" id="cpOut" style="margin-top:9px">로그아웃</button></div></div></div>';
 }
@@ -2943,9 +3126,11 @@ function bindCompleteProfile() {
   $("#cpOut").onclick = () => Auth.logout();
   $("#cpGo").onclick = async () => {
     const n = $("#cpName").value.trim(), b = $("#cpBirth").value;
+    const tm = $("#cpTeam") ? $("#cpTeam").value : ((pendingProfile && pendingProfile.teamId) || "");
     if (!n || !b) return toast("모두 입력해주세요", "err");
+    if (TEAMS().length && !tm) return toast("소속 팀을 선택해주세요", "err");
     try {
-      await DB.set("users", Auth.user.uid, { uid: Auth.user.uid, email: Auth.user.email, name: n, birth: b, joinedAt: Date.now() });
+      await DB.set("users", Auth.user.uid, { uid: Auth.user.uid, email: Auth.user.email, name: n, birth: b, teamId: tm, joinedAt: Date.now() });
       pendingProfile = null;
       if (DB.mode === "sb") await DB.loadAll();
       toast("등록 완료", "ok");
@@ -2955,18 +3140,22 @@ function bindCompleteProfile() {
 
 async function seedDemo() {
   const tdy = today();
+  /* 팀 2개 — 마스터가 전체를 보고, 각 SM 이 자기 팀만 보는 구조를 체험할 수 있게 */
+  await DB.set("teams", "team_a", { name: "장진수SM팀", createdAt: Date.now() - 86400000 * 90, disabled: false });
+  await DB.set("teams", "team_b", { name: "정성일SM팀", createdAt: Date.now() - 86400000 * 30, disabled: false });
   const people = [
-    ["장진수", "1994-08-25", "SM", 4], ["김도현", "1996-08-11", "TL", 3],
-    ["이서준", "1993-02-14", "AP", 5], ["박민지", "1997-11-30", "AP", 1],
-    ["최우진", "1995-08-03", "후보자", 2]
+    ["장진수", "1994-08-25", "마스터", 4, "team_a"], ["김도현", "1996-08-11", "SM", 3, "team_a"],
+    ["이서준", "1993-02-14", "AP", 5, "team_a"], ["박민지", "1997-11-30", "AP", 1, "team_a"],
+    ["최우진", "1995-08-03", "후보자", 2, "team_a"],
+    ["정성일", "1992-04-12", "SM", 2, "team_b"], ["한지우", "1998-09-09", "AP", 1, "team_b"]
   ];
   const ids = [];
   for (let i = 0; i < people.length; i++) {
-    const [n, b, g, gj] = people[i];
+    const [n, b, g, gj, tm] = people[i];
     const id = "demo" + (i + 1); ids.push(id);
     await DB.set("users", id, {
       uid: id, email: (i === 0 ? "admin" : "user" + i) + "@demo.com", pw: "123456",
-      name: n, birth: b, grade: g, approved: true, gaejik: gj,
+      name: n, birth: b, grade: g, teamId: tm, approved: true, gaejik: gj,
       joinedAt: Date.now() - 86400000 * 60, bdayYear: 0,
       checklist: i === 0 ? ["내일 상담 리스트 정리", "미팅 자료 준비", "일일 실적 입력"] : [],
       tlMembers: g === "TL" ? [ids[2] || "demo3"] : []
@@ -2974,9 +3163,15 @@ async function seedDemo() {
   }
   await DB.set("users", "demo9", {
     uid: "demo9", email: "new@demo.com", pw: "123456", name: "신입사원",
-    birth: "1999-05-05", grade: "후보자", approved: false, gaejik: 0, joinedAt: Date.now(), bdayYear: 0
+    birth: "1999-05-05", grade: "후보자", teamId: "team_a", approved: false, gaejik: 0, joinedAt: Date.now(), bdayYear: 0
+  });
+  await DB.set("users", "demo10", {
+    uid: "demo10", email: "new2@demo.com", pw: "123456", name: "김신입",
+    birth: "2000-02-02", grade: "후보자", teamId: "team_b", approved: false, gaejik: 0, joinedAt: Date.now(), bdayYear: 0
   });
   await DB.set("settings", "global", { account: "국민은행 123456-01-234567 장진수", startDate: addDays(tdy, -20) });
+  await DB.set("settings", "team_a", { account: "국민은행 123456-01-234567 장진수" });
+  await DB.set("settings", "team_b", { account: "신한은행 110-987-654321 정성일" });
 
   const times = [[7, 52], [8, 7], [7, 58], [8, 23], [8, 41], [7, 45]];
   for (let d = 20; d >= 0; d--) {
@@ -3039,12 +3234,18 @@ async function afterSignedIn() {
         Auth.user = u ? { uid: u.id, email: u.email } : null;
         if (u) { if (evt === "SIGNED_IN" || evt === "INITIAL_SESSION" || !DB.ready) await afterSignedIn(); }
         else {
-          DB.cache = { users: {}, daily: {}, fines: {}, glog: {}, holidays: {}, settings: {} };
+          DB.cache = { users: {}, daily: {}, fines: {}, glog: {}, holidays: {}, settings: {}, teams: DB.cache.teams || {} };
           DB.ready = false; _rtStarted = false; App.payShown = false;
         }
         App.booting = false; syncProfile(); render();
         if (u) setTimeout(() => { try { runMonthlyGrant(false); } catch (e) { } }, 3000);
       });
+      /* 회원가입 화면에서 팀을 고를 수 있도록 로그인 전에도 팀 목록만 먼저 읽는다 */
+      try {
+        const { data } = await sb.from("teams").select("*");
+        (data || []).forEach(r => { const d = rowToDoc(r); DB.cache.teams[d.id] = d; });
+      } catch (e) { console.warn("teams", e.message); }
+
       let sess = null;
       try { const r = await withTimeout(sb.auth.getSession(), 8000, "세션 확인"); sess = r && r.data && r.data.session; }
       catch (e) { console.warn(e.message); }
