@@ -413,6 +413,19 @@ const KINDS = {
   etc:     { label: "기타",     color: "n", icon: "✏️" }
 };
 
+/** 수기 벌금 사유 프리셋 — 고르면 항목·금액이 자동으로 채워진다(수정 가능). */
+const FINE_PRESETS = [
+  { text: "지각",            kind: "late",    amount: 10000 },
+  { text: "미출근",          kind: "late",    amount: 50000 },
+  { text: "일마감 미실행",    kind: "closing", amount: 10000 },
+  { text: "워킹사진 미달",    kind: "photo",   amount: 10000 },
+  { text: "출근보고 미제출",  kind: "report",  amount: 10000 },
+  { text: "직출 사유 미제출",  kind: "report",  amount: 10000 },
+  { text: "회의 지각",         kind: "etc",     amount: 10000 },
+  { text: "복장 불량",         kind: "etc",     amount: 10000 },
+  { text: "보고 누락",         kind: "etc",     amount: 10000 }
+];
+
 /* ============================ 유틸 ============================ */
 const $ = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -2205,27 +2218,58 @@ function openFineModal(id) {
   });
 }
 
-function openAddFine() {
+function openAddFine(pre) {
+  pre = pre || {};
+  if (!Auth.isAdmin()) { toast("벌금 추가는 관리자만 가능합니다", "err"); return; }
+  const list = ACTIVE_USERS();
+  if (!list.length) { toast("승인된 팀원이 없습니다", "err"); return; }
   modal({
-    title: "벌금 직접 추가",
+    title: "벌금 직접 추가" + (pre.date ? " · " + fmtD(pre.date) : ""),
     body:
       '<div class="fld"><label>팀원</label><select class="inp" id="afU">' +
-      ACTIVE_USERS().map(u => "<option value='" + u.uid + "'>" + esc(u.name) + "</option>").join("") + "</select></div>" +
-      '<div class="fld"><label>날짜</label><input class="inp" type="date" id="afD" value="' + today() + '"></div>' +
-      '<div class="fld"><label>항목</label><select class="inp" id="afK">' +
-      Object.keys(KINDS).map(k => "<option value='" + k + "'" + (k === "etc" ? " selected" : "") + ">" + KINDS[k].icon + " " + KINDS[k].label + "</option>").join("") + "</select></div>" +
-      '<div class="fld"><label>금액</label><input class="inp" type="number" id="afA" value="10000" step="1000"></div>' +
-      '<div class="fld"><label>사유</label><input class="inp" id="afM" placeholder="예: 회의 지각"></div>',
+      list.map(u => "<option value='" + u.uid + "'" + (pre.uid === u.uid ? " selected" : "") + ">" + esc(u.name) + "</option>").join("") + "</select></div>" +
+      '<div class="fld"><label>날짜</label><input class="inp" type="date" id="afD" value="' + esc(pre.date || today()) + '"></div>' +
+      '<div class="fld"><label>사유</label><select class="inp" id="afR">' +
+      FINE_PRESETS.map((r, i) => "<option value='" + i + "'>" + esc(r.text) + "</option>").join("") +
+      "<option value='etc'>✏️ 기타 (직접 입력)</option></select></div>" +
+      '<div class="fld" id="afMWrap" style="display:none"><label>사유 직접 입력</label>' +
+      '<input class="inp" id="afM" placeholder="예: 단톡방 공지 미확인" maxlength="60"></div>' +
+      '<div class="fld"><label>금액</label><input class="inp" type="number" id="afA" value="10000" step="1000" min="0"></div>' +
+      '<div class="fld"><label>항목 (캘린더 표시 색상)</label><select class="inp" id="afK">' +
+      Object.keys(KINDS).map(k => "<option value='" + k + "'>" + KINDS[k].icon + " " + KINDS[k].label + "</option>").join("") + "</select>" +
+      '<div class="hint">사유를 고르면 금액과 항목이 자동으로 채워집니다. 그대로 두거나 직접 바꿔도 됩니다.</div></div>',
     okText: "추가",
     onOk: async () => {
       const uid = $("#afU").value, date = $("#afD").value;
       if (!uid || !date) { toast("팀원과 날짜를 선택해주세요", "err"); return false; }
+      const sel = $("#afR").value;
+      let memo;
+      if (sel === "etc") {
+        memo = $("#afM").value.trim();
+        if (!memo) { toast("사유를 입력해주세요", "err"); return false; }
+      } else {
+        memo = (FINE_PRESETS[Number(sel)] || {}).text || "관리자 추가";
+      }
+      const amount = Number($("#afA").value);
+      if (!(amount > 0)) { toast("금액을 입력해주세요", "err"); return false; }
       await DB.add("fines", {
-        uid, date, kind: $("#afK").value, amount: Number($("#afA").value) || 0,
-        memo: $("#afM").value.trim() || "관리자 추가", manual: true, status: "unpaid",
+        uid, date, kind: $("#afK").value, amount,
+        memo, manual: true, status: "unpaid",
         waived: false, createdAt: Date.now(), createdBy: Auth.profile.name
       });
-      toast("벌금이 추가되었습니다", "ok");
+      toast(fmtD(date) + " 벌금 " + won(amount) + " 추가됨", "ok");
+    },
+    after: () => {
+      const r = $("#afR"), w = $("#afMWrap"), a = $("#afA"), k = $("#afK");
+      const sync = () => {
+        const v = r.value;
+        w.style.display = v === "etc" ? "" : "none";
+        if (v === "etc") { k.value = "etc"; const m = $("#afM"); if (m) m.focus(); return; }
+        const pr = FINE_PRESETS[Number(v)];
+        if (pr) { a.value = pr.amount; k.value = pr.kind; }
+      };
+      r.onchange = sync;
+      sync();
     }
   });
 }
@@ -2359,7 +2403,9 @@ function viewCal() {
     "<select class='inp' id='calU' style='margin-top:11px;padding:8px 26px 8px 10px;font-size:13px'>" +
     "<option value='all'>전체 팀원</option>" +
     ACTIVE_USERS().map(u => "<option value='" + u.uid + "'" + (calUser === u.uid ? " selected" : "") + ">" + esc(u.name) + "</option>").join("") +
-    "</select></div>";
+    "</select>" +
+    (admin ? '<button class="btn pri sm full" id="calAdd" style="margin-top:9px">+ 벌금 직접 추가</button>' : "") +
+    "</div>";
 
   h += '<div class="grid g3" style="margin-bottom:12px">' +
     '<div class="stat acc-r"><div class="lb">' + M + '월 벌금</div><div class="vl" style="font-size:18px">' + won(sumFines(fines)) + "</div></div>" +
@@ -2401,6 +2447,12 @@ function bindCal() {
   $("#mNext").onclick = () => shift(1);
   $("#mNow").onclick = () => { App.month = monthOf(today()); render(); };
   const cu = $("#calU"); if (cu) cu.onchange = e => { calUser = e.target.value; render(); };
+  const ca = $("#calAdd");
+  if (ca) ca.onclick = () => {
+    const t = today();
+    openAddFine({ date: monthOf(t) === App.month ? t : App.month + "-01",
+                  uid: calUser !== "all" ? calUser : "" });
+  };
   $$("[data-cal]").forEach(c => c.onclick = () => openCalDay(c.dataset.cal));
   $$("[data-open-fine]").forEach(b => b.onclick = () => openFineModal(b.dataset.openFine));
   $$("[data-calx]").forEach(b => b.onclick = ev => {
@@ -2438,10 +2490,13 @@ function openCalDay(date) {
           (d.type ? '<span class="bdg ' + TYPES[d.type].color + '">' + d.type + "</span>" : '<span class="bdg r">미보고</span>') + "</div>";
       }).join("") + "</div>" +
       '<div class="sec-t" style="margin-top:0">벌금</div><div class="card pad0" style="margin:0">' +
-      (fines.length ? fines.map(fineRow).join("") : '<div class="empty">없음</div>') + "</div>",
+      (fines.length ? fines.map(fineRow).join("") : '<div class="empty">없음</div>') + "</div>" +
+      (Auth.isAdmin() ? '<button class="btn pri full" id="cdAdd" style="margin-top:14px">+ 이 날 벌금 직접 추가</button>' : ""),
     after: () => {
       $$("[data-open-fine]", $("#ovl")).forEach(b => b.onclick = () => openFineModal(b.dataset.openFine));
       $$("[data-open-day]", $("#ovl")).forEach(b => b.onclick = () => openDayModal(b.dataset.openDay, b.dataset.uid));
+      const ad = $("#cdAdd");
+      if (ad) ad.onclick = () => { closeModal(); openAddFine({ date, uid: calUser !== "all" ? calUser : "" }); };
     }
   });
 }
