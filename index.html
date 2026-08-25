@@ -399,7 +399,7 @@ const DEFAULT_SETTINGS = {
 
 const TYPES = {
   "출근":    { icon: "🏢", desc: "회사로 출근 · 8시까지",        color: "b" },
-  "개직":    { icon: "🌴", desc: "휴가 · 당일 새벽3시까지",       color: "g" },
+  "개직":    { icon: "🌴", desc: "휴가 · 당일 새벽3시까지 · 증빙필수", color: "g" },
   "병원근무": { icon: "🏥", desc: "병원 출근 · 9시까지 · 병원명", color: "c" },
   "직출":    { icon: "🚗", desc: "상담처 이동 · 8시까지 · 증빙",  color: "p" }
 };
@@ -1751,11 +1751,14 @@ function viewReport() {
     '<input type="file" accept="image/*" id="rzFile" class="hide"></div></div>';
 
   h += '<div class="fld ' + (d.type === "개직" ? "" : "hide") + '" id="gjWrap" style="margin-top:13px">' +
-    '<label>개직 증빙 이미지</label>' +
+    '<label>개직 증빙 이미지 (필수)</label>' +
     (d.gaejikPhoto ? '<img src="' + d.gaejikPhoto + '" class="thumb" style="margin-bottom:8px" data-img="' + d.gaejikPhoto + '" data-imgt="개직 증빙">' : "") +
     '<div class="upl" id="gjUp"><div class="ic">📎</div><div class="t">' + (d.gaejikPhoto ? "이미지 다시 올리기" : "이미지 올리기") + "</div>" +
     '<div class="s">SM보고 및 준비방 보고 캡쳐이미지 올려주세요.</div></div>' +
-    '<input type="file" accept="image/*" id="gjFile" class="hide"></div>';
+    '<input type="file" accept="image/*" id="gjFile" class="hide">' +
+    (d.gaejikPhoto ? '<div class="hint" style="color:var(--ok)">✅ 증빙 이미지 첨부됨</div>'
+                   : '<div class="hint" style="color:var(--dan)">이미지를 올려야 개직 보고를 제출할 수 있습니다.</div>') +
+    "</div>";
   h += '<button class="btn pri full" id="rSave" style="margin-top:14px">' + (d.type ? "보고 수정" : "보고 제출") + "</button>";
   if (d.type) h += '<div class="hint" style="text-align:center;margin-top:9px">✅ ' + d.type +
     " 로 제출됨 · " + tsFmtFull(d.reportAt) + (d.gaejikUsed ? " · 개직 1개 차감" : "") +
@@ -1896,6 +1899,8 @@ function bindReport() {
     const hosp = $("#rHosp") ? $("#rHosp").value.trim() : "";
     if (sel === "직출" && !reason) return toast("직출은 사유를 반드시 입력해주세요", "err");
     if (sel === "병원근무" && !hosp) return toast("병원근무는 병원명을 입력해주세요", "err");
+    if (sel === "개직" && !(DB.get("daily", dayId(p.uid, rDate)) || {}).gaejikPhoto)
+      return toast("개직은 SM보고·준비방 보고 캡쳐이미지를 먼저 올려주세요", "err");
     const already = (DB.get("daily", dayId(p.uid, rDate)) || {}).type;
     if (sel === "직출" && already !== "직출" && Date.now() > atTime(tdy, S.jikchulDeadline || "22:00"))
       return toast("오후 10시 이후에는 직출을 선택할 수 없습니다.", "err");
