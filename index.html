@@ -1623,10 +1623,11 @@ function viewCheckin() {
         (admin ? '<div style="margin-top:5px"><input class="inp" type="time" style="padding:4px 6px;font-size:11.5px;width:98px" value="' +
           (r.hm || "") + '" data-ct="' + r.u.uid + '"></div>' : "") +
         "</div></div>" +
-        (extra.length || r.d.reasonPhoto
+        (extra.length || r.d.reasonPhoto || r.d.gaejikPhoto
           ? '<div style="padding:0 14px 12px 14px">' +
             (extra.length ? '<div class="banner i" style="margin:0 0 8px;font-size:12px">' + extra.join("<br>") + "</div>" : "") +
             (r.d.reasonPhoto ? '<img src="' + r.d.reasonPhoto + '" class="thumb" style="max-width:220px;cursor:pointer" data-img="' + r.d.reasonPhoto + '" data-imgt="' + esc(r.u.name) + ' 직출 증빙">' : "") +
+            (r.d.gaejikPhoto ? '<img src="' + r.d.gaejikPhoto + '" class="thumb" style="max-width:220px;cursor:pointer" data-img="' + r.d.gaejikPhoto + '" data-imgt="' + esc(r.u.name) + ' 개직 증빙">' : "") +
             "</div>" : "") +
         "</div>";
     }).join("") : '<div class="empty">승인된 팀원이 없습니다</div>') + "</div>";
@@ -1748,6 +1749,13 @@ function viewReport() {
     '<div class="upl" id="rzUp"><div class="ic">📎</div><div class="t">' + (d.reasonPhoto ? "이미지 다시 올리기" : "이미지 올리기") + "</div>" +
     '<div class="s">통화목록 또는 고객 연락 캡쳐를 첨부해주세요</div></div>' +
     '<input type="file" accept="image/*" id="rzFile" class="hide"></div></div>';
+
+  h += '<div class="fld ' + (d.type === "개직" ? "" : "hide") + '" id="gjWrap" style="margin-top:13px">' +
+    '<label>개직 증빙 이미지</label>' +
+    (d.gaejikPhoto ? '<img src="' + d.gaejikPhoto + '" class="thumb" style="margin-bottom:8px" data-img="' + d.gaejikPhoto + '" data-imgt="개직 증빙">' : "") +
+    '<div class="upl" id="gjUp"><div class="ic">📎</div><div class="t">' + (d.gaejikPhoto ? "이미지 다시 올리기" : "이미지 올리기") + "</div>" +
+    '<div class="s">SM보고 및 준비방 보고 캡쳐이미지 올려주세요.</div></div>' +
+    '<input type="file" accept="image/*" id="gjFile" class="hide"></div>';
   h += '<button class="btn pri full" id="rSave" style="margin-top:14px">' + (d.type ? "보고 수정" : "보고 제출") + "</button>";
   if (d.type) h += '<div class="hint" style="text-align:center;margin-top:9px">✅ ' + d.type +
     " 로 제출됨 · " + tsFmtFull(d.reportAt) + (d.gaejikUsed ? " · 개직 1개 차감" : "") +
@@ -1850,6 +1858,7 @@ function bindReport() {
     $$("[data-type]").forEach(x => x.classList.toggle("on", x.dataset.type === sel));
     $("#reasonWrap").classList.toggle("hide", sel !== "직출");
     $("#hospWrap").classList.toggle("hide", sel !== "병원근무");
+    const gw = $("#gjWrap"); if (gw) gw.classList.toggle("hide", sel !== "개직");
   });
 
   /* 직출 증빙 이미지 */
@@ -1863,6 +1872,20 @@ function bindReport() {
       const url = await DB.uploadImage(raw, "reason");
       await DB.set("daily", dayId(p.uid, rDate), { uid: p.uid, date: rDate, reasonPhoto: url, updatedAt: Date.now() });
       toast("증빙 이미지 첨부됨", "ok");
+    } catch (er) { toast(cleanErr(er), "err"); }
+  };
+
+  /* 개직 증빙 이미지 (SM보고 · 준비방 보고 캡쳐) */
+  const gjUp = $("#gjUp"), gjFile = $("#gjFile");
+  if (gjUp) gjUp.onclick = () => gjFile.click();
+  if (gjFile) gjFile.onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      toast("이미지 처리 중…");
+      const raw = await compressImage(f, 900, .72);
+      const url = await DB.uploadImage(raw, "gaejik");
+      await DB.set("daily", dayId(p.uid, rDate), { uid: p.uid, date: rDate, gaejikPhoto: url, updatedAt: Date.now() });
+      toast("개직 증빙 이미지 첨부됨", "ok");
     } catch (er) { toast(cleanErr(er), "err"); }
   };
 
@@ -2294,6 +2317,7 @@ function dayDetailBody(uid, date) {
     (d.reason ? (canSee ? '<div class="banner i">🚗 직출 사유: <b>' + esc(d.reason) + "</b></div>"
                         : '<div class="banner w">직출 사유는 담당 TL·관리자만 볼 수 있습니다.</div>') : "") +
     (d.reasonPhoto && canSee ? '<div class="fld"><label>직출 증빙</label><img src="' + d.reasonPhoto + '" class="thumb" data-img="' + d.reasonPhoto + '" data-imgt="직출 증빙"></div>' : "") +
+    (d.gaejikPhoto ? '<div class="fld"><label>개직 증빙 (SM보고 · 준비방 보고)</label><img src="' + d.gaejikPhoto + '" class="thumb" data-img="' + d.gaejikPhoto + '" data-imgt="개직 증빙"></div>' : "") +
     '<div class="grid g2" style="margin-bottom:14px">' +
     '<div class="stat"><div class="lb">출근 등록</div><div class="vl" style="font-size:19px">' + (tsHM(d.checkinAt) || "-") + "</div>" +
     '<div class="sub">기준 ' + S.workStart + "</div></div>" +
